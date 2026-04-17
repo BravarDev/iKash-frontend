@@ -6,9 +6,9 @@ import paymentMethods from "../utils/paymentMethods";
 import arrow from '../../../../public/down-arrow.svg'
 import { useState } from 'react';
 import cryptoAssets from '../utils/cryptoAssets';
-import { CreateOfferModalProps } from '../utils/createOfferModalProps';
+import { CloseModalProps } from '@/app/utils/closeModalProps';
 
-export function CreateOfferModal({ onClose }: CreateOfferModalProps) {
+export function CreateOfferModal({ onClose }: CloseModalProps) {
     const [isCryptoAssetOpen, setIsCryptoAssetOpen] = useState(false);
     const [cryptoAsset, setCryptoAsset] = useState(cryptoAssets[0]);
     const [tab, setTab] = useState("Buy");
