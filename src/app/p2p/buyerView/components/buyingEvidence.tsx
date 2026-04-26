@@ -1,6 +1,6 @@
 export function BuyingEvidence() {
     return (
-        <div className="bg-[#161618] w-100.5 h-120 mt-40 rounded-2xl">
+        <div className="bg-[#161618] w-100.5 h-120 rounded-2xl">
             <div className="flex items-center justify-center px-4 py-5">
                 <div className="bg-[#1B1B21] border border-[#4549324D] w-92.5 h-24.75 rounded-lg p-5">
                     <p className="text-[#C2C7D0] text-[12px]">

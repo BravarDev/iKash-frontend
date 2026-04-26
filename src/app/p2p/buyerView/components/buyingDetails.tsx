@@ -7,7 +7,7 @@ export interface BuyingDetailsProps {
 
 export function BuyingDetails({ amount, unitPrice, total, paymentMethod }: BuyingDetailsProps) {
     return (
-        <div className="bg-[#161618] w-154 h-120 border-l-4 border-[#DAFF00] rounded-tr-xl rounded-br-xl mt-40">
+        <div className="bg-[#161618] w-154 h-120 border-l-4 border-[#DAFF00] rounded-tr-xl rounded-br-xl">
             <div className="grid grid-cols-2">
                 <div className="m-8">
                     <p className="text-[#C2C7D0] text-[12px] uppercase">
