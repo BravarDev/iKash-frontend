@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { Users } from "../models/users";
 import { CreateUser } from "../models/createUser";
 
-export function useGetUsers() {
+export function useUsers() {
     const [users, setUsers] = useState<Users[]>([]);
     const [user, setUser] = useState<Users | null>(null);
+    const [userFound, setUserFound] = useState<Record<string, CreateUser>>({})
 
     useEffect(() => {
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`)
@@ -25,7 +26,7 @@ export function useGetUsers() {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`)
             if (!res.ok) throw new Error('User not found');
             const data = await res.json();
-            setUser(data);
+            setUserFound(prev => ({ ...prev, [userId]: data }));
         } catch (error) {
             console.error(error)
         }
@@ -65,5 +66,5 @@ export function useGetUsers() {
         }
     }
 
-    return { users, user, getUser, createUser, updateUser };
+    return { users, user, getUser, createUser, updateUser, userFound };
 }

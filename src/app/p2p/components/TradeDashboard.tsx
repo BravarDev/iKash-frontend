@@ -1,18 +1,26 @@
 "use client";
 
-
-
-import { useState } from "react";
-import cryptoAssets from "../utils/cryptoAssets";
-
-import offers from '../utils/offers';
+import { useEffect, useState } from "react";
 import { CreateOfferModal } from "./CreateOfferModal";
+import { useOffers } from "@/features/offer/hooks/useOffers";
+import { useUsers } from "@/features/user/hooks/useUsers";
 
 export function TradeDashboard() {
     const [tab, setTab] = useState("Buy");
     const [amount, setAmount] = useState("");
     const [isOpen, setIsOpen] = useState(false);
+    const { offers } = useOffers();
+    const { getUser, userFound } = useUsers();
+
     
+
+    useEffect(() => {
+        offers.forEach((offer) => {
+            if (offer?.creatorId) {
+                getUser(offer.creatorId);
+            }
+        })
+    }, [offers]);
 
     return (
         <div className="w-308 h-246 border-r border-[#1F2937] pt-12">
@@ -98,7 +106,7 @@ export function TradeDashboard() {
                 <div className="space-y-2">
                     {offers.map((offer) => (
                         <div
-                            key={offer.name}
+                            key={offer.offerId}
                             className="grid grid-cols-4 items-center bg-[#161618] border border-[#1F2937] rounded-3xl px-4 py-5 hover:border-[#2a2a2a] hover:bg-[#181818] transition-all duration-200"
                         >
                             <div className="flex items-center gap-3">
@@ -106,11 +114,7 @@ export function TradeDashboard() {
                                     👤
                                 </div>
                                 <div>
-                                    <p className="text-white font-semibold text-sm">{offer.name}</p>
-                                    <p className="text-[11px] text-[#4b5563] mt-0.5">
-                                        {offer.orders} orders |{" "}
-                                        <span className="text-[#bced09]">{offer.completion} Completion</span>
-                                    </p>
+                                    <p className="text-white font-semibold text-sm">{userFound[offer.creatorId]?.alias}</p>
                                 </div>
                             </div>
                             <div>
@@ -119,8 +123,8 @@ export function TradeDashboard() {
                                 <p className="text-[10px] text-[#4b5563] mt-0.5 tracking-wide">1 BTC MARKET PRICE</p>
                             </div>
                             <div>
-                                <p className="text-sm text-white">Available: <span className="font-semibold">{offer.available}</span></p>
-                                <p className="text-[11px] text-[#6b7280] mt-0.5">Limit: {offer.limitMin} - {offer.limitMax}</p>
+                                <p className="text-sm text-white">Available: <span className="font-semibold">ver</span></p>
+                                <p className="text-[11px] text-[#6b7280] mt-0.5">Limit: {offer.minAmount} - {offer.maxAmount}</p>
                             </div>
                             <div className="flex">
                                 <button className="bg-[#bced09] hover:bg-[#d4f53a] text-black text-sm font-bold px-6 py-2.5 rounded-lg transition-all duration-200 hover:scale-105 active:scale-95">

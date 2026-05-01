@@ -10,7 +10,7 @@ export const lobstrAdapter = {
         }
     },
 
-    //Obtiene el public key del usuario.
+    // Obtiene el public key del usuario.
     async getPublicKey(): Promise<string | null> {
         try {
             const key = await getPublicKey();
