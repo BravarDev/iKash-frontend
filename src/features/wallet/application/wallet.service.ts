@@ -3,30 +3,37 @@ import { lobstrAdapter } from "../infrastructure/lobstr.adapter";
 import type { WalletProvider } from "../domain/wallet.types";
 
 // recupera la ultima wallet usada
-const STORAGE_KEY = "wallet:provider";
+const PROVIDER_KEY = "wallet:provider";
+const PUBLICKEY_KEY = "wallet:publicKey";
 
 export const walletService = {
-    //Intenta restaurar la sesión de la última wallet conectada
+    //Restaura la sesión desde localStorage sin llamadas a las extensiones
     async restoreSession(): Promise<{ publicKey: string; provider: WalletProvider } | null> {
-        const savedProvider = localStorage.getItem(STORAGE_KEY) as WalletProvider | null;
-        if (!savedProvider) return null;
+        const savedProvider = localStorage.getItem(PROVIDER_KEY) as WalletProvider | null;
+        const savedPublicKey = localStorage.getItem(PUBLICKEY_KEY);
 
+        // Si no hay datos guardados, no hay sesión que restaurar
+        if (!savedProvider || !savedPublicKey) return null;
+
+        // Validar que el proveedor esté instalado (sin pedir autorización)
         if (savedProvider === "freighter") {
             const installed = await freighterAdapter.isInstalled();
-            if (!installed) return null;
-            const allowed = await freighterAdapter.isAllowed();
-            if (!allowed) return null;
-            const publicKey = await freighterAdapter.getAddress();
-            if (!publicKey) return null;
-            return { publicKey, provider: "freighter" };
+            if (!installed) {
+                // Limpiar si la extensión no está instalada
+                this.clearSession();
+                return null;
+            }
+            return { publicKey: savedPublicKey, provider: "freighter" };
         }
 
         if (savedProvider === "lobstr") {
             const installed = await lobstrAdapter.isInstalled();
-            if (!installed) return null;
-            const publicKey = await lobstrAdapter.getPublicKey();
-            if (!publicKey) return null;
-            return { publicKey, provider: "lobstr" };
+            if (!installed) {
+                // Limpiar si la extensión no está instalada
+                this.clearSession();
+                return null;
+            }
+            return { publicKey: savedPublicKey, provider: "lobstr" };
         }
 
         return null;
@@ -48,11 +55,14 @@ export const walletService = {
             publicKey = key;
         }
 
-        localStorage.setItem(STORAGE_KEY, provider);
+        // Guardar tanto el provider como el publicKey
+        localStorage.setItem(PROVIDER_KEY, provider);
+        localStorage.setItem(PUBLICKEY_KEY, publicKey);
         return publicKey;
     },
 
     clearSession() {
-        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(PROVIDER_KEY);
+        localStorage.removeItem(PUBLICKEY_KEY);
     },
 };

@@ -1,6 +1,6 @@
 export const cryptoAssets = [
-    'XLM (Stellar Lumens)',
-    'USDC (USDC COIN)',
+    {label: 'XLM (Stellar Lumens)', value: 'XLM'},
+    {label: 'USDC (USDC COIN)', value: 'USDC'},
 ];
 
 export default cryptoAssets;

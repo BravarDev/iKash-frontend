@@ -41,7 +41,7 @@ export function useOffers() {
             })
             if (!res.ok) throw new Error('Create offer error');
             const data = await res.json();
-            setOffer(data);
+            return data;
         } catch (error) {
             console.error('Error', error);
         }

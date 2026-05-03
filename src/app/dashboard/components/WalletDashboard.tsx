@@ -3,6 +3,9 @@
 import { useWallet } from "@/features/wallet";
 import { useWalletBalance } from "@/features/wallet/presentation/hooks/useWalletBalance";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { SendFundsModal } from "./SendFundsModal";
+import { ReceiveFundsModal } from "./ReceiveFundsModal";
 
 const assets = [
     {
@@ -53,6 +56,9 @@ export function WalletDashboard() {
     const { publicKey } = useWallet();
     const { balance, isLoading, error } = useWalletBalance(publicKey);
 
+    const [isSendModalOpen, setIsModalOpen] = useState(false);
+    const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
+
     // Esto es de prueba, hay que quitarlo
     const nav = useRouter();
 
@@ -95,13 +101,20 @@ export function WalletDashboard() {
                     </div>
 
                     <div className="flex gap-3">
-                        <button className="flex items-center gap-2 bg-[#bced09] hover:bg-[#d4f53a] text-black text-xs font-bold px-5 py-3 rounded-xl tracking-wider transition-all duration-200 hover:scale-105 active:scale-95">
+                        <button 
+                            className="flex items-center gap-2 bg-[#bced09] hover:bg-[#d4f53a] text-black text-xs font-bold 
+                            px-5 py-3 rounded-xl tracking-wider transition-all duration-200 hover:scale-105 active:scale-95"
+                            onClick={() => setIsModalOpen(true)}
+                        >
                             <svg viewBox="0 0 14 14" className="w-3.5 h-3.5" fill="none">
                                 <path d="M2 12L12 2M12 2H5M12 2v7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                             SEND
                         </button>
-                        <button className="flex items-center gap-2 bg-[#2a2a2a] hover:bg-[#333] text-white text-xs font-bold px-5 py-3 rounded-xl tracking-wider transition-all duration-200 hover:scale-105 active:scale-95 border border-[#3a3a3a]">
+                        <button className="flex items-center gap-2 bg-[#2a2a2a] hover:bg-[#333] text-white text-xs font-bold 
+                            px-5 py-3 rounded-xl tracking-wider transition-all duration-200 hover:scale-105 active:scale-95 border border-[#3a3a3a]"
+                            onClick={() => setIsReceiveModalOpen(true)}
+                        >
                             <svg viewBox="0 0 14 14" className="w-3.5 h-3.5" fill="none">
                                 <path d="M12 2L2 12M2 12H9M2 12V5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
@@ -144,6 +157,10 @@ export function WalletDashboard() {
                     ))}
                 </div>
             </div>
+
+            {isSendModalOpen && <SendFundsModal onClose={() => setIsModalOpen(false)} />}
+            {isReceiveModalOpen && <ReceiveFundsModal onClose={() => setIsReceiveModalOpen(false)} /> }
+
             <div className="pt-20">
                 <button onClick={() => nav.push('/test')}>Test</button>
             </div>
