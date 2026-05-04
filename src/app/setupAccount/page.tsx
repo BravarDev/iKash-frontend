@@ -1,15 +1,49 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Header } from './components/Header'
 import { Line } from './components/Line'
 import { ProgressBar } from './components/ProgressBar'
 import Stage1 from './pages/Stage1'
 import Stage2 from './pages/Stage2'
 import Stage3 from './pages/Stage3'
+import { useUsers } from '../../features/user/hooks/useUsers'
+import { useUser } from '../../features/user/presentation/context/UserContext'
+import { SetupAccountPayload } from '../../features/user/models/setupAccount'
 
 export default function SetupAccount() {
     const [stage, setStage] = useState<1 | 2 | 3>(1);
+    const [formData, setFormData] = useState<SetupAccountPayload>({});
+    const { setupAccount } = useUsers();
+    const { currentUser, setCurrentUser } = useUser();
+    const router = useRouter();
+
+    const handleNext = (data: Partial<SetupAccountPayload>) => {
+        setFormData(prev => ({ ...prev, ...data }));
+        setStage((prev) => (prev + 1) as 1 | 2 | 3);
+    };
+
+    const handleFinish = async (data: Partial<SetupAccountPayload>) => {
+        const finalData = { ...formData, ...data };
+        if (currentUser) {
+            const updated = await setupAccount(currentUser.userId, finalData);
+            if (updated) {
+                setCurrentUser(updated);
+                router.push('/dashboard');
+            }
+        }
+    };
+
+    const handleSkip = async () => {
+        if (currentUser) {
+            const updated = await setupAccount(currentUser.userId, { pendingAccountInfo: false } as any);
+            if (updated) {
+                setCurrentUser(updated);
+                router.push('/dashboard');
+            }
+        }
+    };
 
     return (
         <div className="relative flex flex-col justify-start items-center min-h-screen w-full overflow-y-auto overflow-x-hidden [@media(min-height:900px)]:pb-[72px] [@media(min-height:900px)]:pt-[72px]">
@@ -20,9 +54,16 @@ export default function SetupAccount() {
                 <div className="flex flex-col gap-6 w-full items-center">
                     <ProgressBar stage={stage} />
                     <Header />
-                    {stage === 1 && <Stage1 onNext={() => setStage(2)} />}
-                    {stage === 2 && <Stage2 onNext={() => setStage(3)} />}
-                    {stage === 3 && <Stage3 onFinish={() => {}} />}
+                    {stage === 1 && <Stage1 onNext={handleNext} />}
+                    {stage === 2 && <Stage2 onNext={handleNext} />}
+                    {stage === 3 && <Stage3 onFinish={handleFinish} />}
+                    
+                    <button 
+                        onClick={handleSkip}
+                        className="text-[#94A3B8] text-sm hover:text-[#F1F5F9] transition-colors mt-2"
+                    >
+                        Skip for now, I'll do this later
+                    </button>
                 </div>
             </div>
             

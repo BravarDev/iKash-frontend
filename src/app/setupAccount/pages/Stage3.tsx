@@ -1,26 +1,30 @@
 'use client'
 
+import { useState } from 'react'
 import Image from 'next/image'
 import preferencesIcon from '../../../../public/preferences-icon.svg'
 import arrow from '../../../../public/down-arrow.svg'
-import { useState } from 'react'
 import banks from '../thirdStage/utils/banks'
 import { Button } from '../components/Button'
-import { useRouter } from 'next/navigation'
+import { SetupAccountPayload } from '../../../features/user/models/setupAccount'
 
 interface Stage3Props {
-    onFinish: () => void;
+    onFinish: (data: Partial<SetupAccountPayload>) => void;
 }
 
 export default function Stage3({ onFinish }: Stage3Props) {
-    const nav = useRouter();
     const [bank, setBank] = useState(banks[0]);
+    const [accountHolder, setAccountHolder] = useState('');
+    const [accountNumber, setAccountNumber] = useState('');
     const [open, setOpen] = useState(false);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onFinish();
-        nav.push('/home');
+        onFinish({
+            bankName: bank,
+            accountHolderName: accountHolder,
+            accountNumber: accountNumber
+        });
     }
 
     return (
@@ -74,8 +78,10 @@ export default function Stage3({ onFinish }: Stage3Props) {
                     <label className="text-[#CBD5E1] font-semibold text-sm">Account Holder Name</label>
                     <input
                         type="text"
+                        value={accountHolder}
+                        onChange={(e) => setAccountHolder(e.target.value)}
                         placeholder="Full Legal Name"
-                        className="bg-[#01030880] text-[#6B7280] text-[16px] rounded-xl px-4 py-3 outline-none border border-[#343434] focus:border-gray-600"
+                        className="bg-[#01030880] text-[#F1F5F9] text-[16px] rounded-xl px-4 py-3 outline-none border border-[#343434] focus:border-[#BCED09]"
                     />
                 </div>
 
@@ -83,8 +89,10 @@ export default function Stage3({ onFinish }: Stage3Props) {
                     <label className="text-[#CBD5E1] font-semibold text-sm">IBAN / Account Number</label>
                     <input
                         type="text"
+                        value={accountNumber}
+                        onChange={(e) => setAccountNumber(e.target.value)}
                         placeholder="EX00 0000 0000..."
-                        className="bg-[#01030880] text-[#6B7280] text-[16px] rounded-xl px-4 py-3 outline-none border border-[#343434] focus:border-gray-600"
+                        className="bg-[#01030880] text-[#F1F5F9] text-[16px] rounded-xl px-4 py-3 outline-none border border-[#343434] focus:border-[#BCED09]"
                     />
                 </div>
             </div>

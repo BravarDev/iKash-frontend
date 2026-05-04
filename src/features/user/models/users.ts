@@ -1,7 +1,11 @@
 export interface Users {
-    userID: string;
+    userId: string;
     publicKey: string;
     alias?: string;
+    email?: string;
+    notificationsEnabled: boolean;
+    preferredCurrency?: string;
+    pendingAccountInfo: boolean;
     kycStatus: string;
     kycUpdatedAt?: string;
     totalVolume: string;

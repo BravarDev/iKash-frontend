@@ -1,14 +1,15 @@
 'use client'
 
+import { useState } from 'react'
 import Image from 'next/image'
 import preferencesIcon from '../../../../public/preferences-icon.svg'
 import arrow from '../../../../public/down-arrow.svg'
-import { useState } from 'react'
 import currencies from '../secondStage/utils/currencies'
 import { Button } from '../components/Button'
+import { SetupAccountPayload } from '../../../features/user/models/setupAccount'
 
 interface Stage2Props {
-    onNext: () => void;
+    onNext: (data: Partial<SetupAccountPayload>) => void;
 }
 
 export default function Stage2({ onNext }: Stage2Props) {
@@ -18,7 +19,10 @@ export default function Stage2({ onNext }: Stage2Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onNext();
+        onNext({ 
+            notificationsEnabled: notifications, 
+            preferredCurrency: currency 
+        });
     }
 
     return (
