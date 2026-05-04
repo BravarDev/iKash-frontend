@@ -11,6 +11,8 @@ import {
 import { walletService } from "../../application/wallet.service";
 import type { WalletContext, WalletState, WalletProvider } from "../../domain/wallet.types";
 import { useRouter } from "next/navigation";
+import { useUsers } from "../../../user/hooks/useUsers";
+import { useUser } from "../../../user/presentation/context/UserContext";
 
 const Context = createContext<WalletContext | null>(null);
 
@@ -40,18 +42,32 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const router = useRouter();
+    const { getOrCreateByWallet } = useUsers();
+    const { setCurrentUser } = useUser();
 
     const connect = useCallback(async (provider: WalletProvider) => {
         setState((s) => ({ ...s, isLoading: true, error: null }));
         try {
             const publicKey = await walletService.connect(provider);
             setState({ publicKey, provider, isConnected: true, isLoading: false, error: null });
-            router.push("/dashboard");
+            
+            // Onboarding logic
+            const userAccount = await getOrCreateByWallet(publicKey);
+            if (userAccount) {
+                setCurrentUser(userAccount);
+                if (userAccount.pendingAccountInfo) {
+                    router.push("/setupAccount");
+                } else {
+                    router.push("/dashboard");
+                }
+            } else {
+                router.push("/dashboard");
+            }
         } catch (err) {
             const msg = err instanceof Error ? err.message : "Error desconocido";
             setState((s) => ({ ...s, isLoading: false, error: msg }));
         }
-    }, []);
+    }, [getOrCreateByWallet, setCurrentUser, router]);
 
     const disconnect = useCallback(() => {
         walletService.clearSession();

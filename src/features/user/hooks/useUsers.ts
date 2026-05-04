@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Users } from "../models/users";
 import { CreateUser } from "../models/createUser";
+import { SetupAccountPayload } from "../models/setupAccount";
 
 export function useUsers() {
     const [users, setUsers] = useState<Users[]>([]);
@@ -66,5 +67,48 @@ export function useUsers() {
         }
     }
 
-    return { users, user, getUser, createUser, updateUser, userFound };
+    const getOrCreateByWallet = async (publicKey: string): Promise<Users | null> => {
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/account?publicKey=${publicKey}`)
+            if (!res.ok) throw new Error('Get/Create account error');
+            const data = await res.json();
+            setUser(data);
+            return data;
+        } catch (error) {
+            console.error('Error in getOrCreateByWallet:', error);
+            return null;
+        }
+    }
+
+    const checkAliasAvailable = async (alias: string): Promise<{ available: boolean }> => {
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/available-username?alias=${alias}`)
+            if (!res.ok) throw new Error('Check alias error');
+            return await res.json();
+        } catch (error) {
+            console.error('Error in checkAliasAvailable:', error);
+            return { available: false };
+        }
+    }
+
+    const setupAccount = async (userId: string, payload: SetupAccountPayload): Promise<Users | null> => {
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}/setup`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(payload),
+            })
+            if (!res.ok) throw new Error('Setup account error');
+            const data = await res.json();
+            setUser(data);
+            return data;
+        } catch (error) {
+            console.error('Error in setupAccount:', error);
+            return null;
+        }
+    }
+
+    return { users, user, getUser, createUser, updateUser, userFound, getOrCreateByWallet, checkAliasAvailable, setupAccount };
 }
