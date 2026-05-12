@@ -43,7 +43,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
     const router = useRouter();
     const { getOrCreateByWallet } = useUsers();
-    const { setCurrentUser } = useUser();
+    const { setCurrentUser, setAccessToken } = useUser();
 
     const connect = useCallback(async (provider: WalletProvider) => {
         setState((s) => ({ ...s, isLoading: true, error: null }));
@@ -51,9 +51,21 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             const publicKey = await walletService.connect(provider);
             setState({ publicKey, provider, isConnected: true, isLoading: false, error: null });
             
+            // Auth logic: Get temporary JWT
+            const loginRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ publicKey }),
+            });
+            if (loginRes.ok) {
+                const { access_token } = await loginRes.json();
+                setAccessToken(access_token);
+            }
+
             // Onboarding logic
             const userAccount = await getOrCreateByWallet(publicKey);
             if (userAccount) {
+                setCurrentUser(userAccount);
                 setCurrentUser(userAccount);
                 if (userAccount.pendingAccountInfo) {
                     router.push("/setupAccount");
