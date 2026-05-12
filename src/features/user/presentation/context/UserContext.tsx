@@ -6,6 +6,8 @@ import { Users } from '../../models/users';
 interface UserContextType {
     currentUser: Users | null;
     setCurrentUser: (user: Users | null) => void;
+    accessToken: string | null;
+    setAccessToken: (token: string | null) => void;
     isLoading: boolean;
     setIsLoading: (loading: boolean) => void;
 }
@@ -14,17 +16,22 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
     const [currentUser, setCurrentUser] = useState<Users | null>(null);
+    const [accessToken, setAccessToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
     // Optional: Load user from localStorage or similar if needed
     useEffect(() => {
-        const stored = localStorage.getItem('ikash_user');
-        if (stored) {
+        const storedUser = localStorage.getItem('ikash_user');
+        const storedToken = localStorage.getItem('ikash_token');
+        if (storedUser) {
             try {
-                setCurrentUser(JSON.parse(stored));
+                setCurrentUser(JSON.parse(storedUser));
             } catch (e) {
                 console.error('Error parsing stored user:', e);
             }
+        }
+        if (storedToken) {
+            setAccessToken(storedToken);
         }
     }, []);
 
@@ -37,8 +44,24 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const handleSetAccessToken = (token: string | null) => {
+        setAccessToken(token);
+        if (token) {
+            localStorage.setItem('ikash_token', token);
+        } else {
+            localStorage.removeItem('ikash_token');
+        }
+    };
+
     return (
-        <UserContext.Provider value={{ currentUser, setCurrentUser: handleSetCurrentUser, isLoading, setIsLoading }}>
+        <UserContext.Provider value={{ 
+            currentUser, 
+            setCurrentUser: handleSetCurrentUser, 
+            accessToken,
+            setAccessToken: handleSetAccessToken,
+            isLoading, 
+            setIsLoading 
+        }}>
             {children}
         </UserContext.Provider>
     );

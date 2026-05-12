@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import { Users } from "../models/users";
 import { CreateUser } from "../models/createUser";
 import { SetupAccountPayload } from "../models/setupAccount";
+import { useUser } from "../presentation/context/UserContext";
 
 export function useUsers() {
     const [users, setUsers] = useState<Users[]>([]);
     const [user, setUser] = useState<Users | null>(null);
     const [userFound, setUserFound] = useState<Record<string, CreateUser>>({})
+    const { accessToken, setAccessToken, setCurrentUser } = useUser();
 
     useEffect(() => {
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`)
@@ -97,13 +99,18 @@ export function useUsers() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    "Authorization": `Bearer ${accessToken}`
                 },
                 body: JSON.stringify(payload),
             })
             if (!res.ok) throw new Error('Setup account error');
-            const data = await res.json();
-            setUser(data);
-            return data;
+            const data = await res.json(); // Data is { user, access_token }
+            
+            // Update context with final user and token
+            setCurrentUser(data.user);
+            setAccessToken(data.access_token);
+            
+            return data.user;
         } catch (error) {
             console.error('Error in setupAccount:', error);
             return null;
