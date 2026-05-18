@@ -11,4 +11,6 @@ export interface Users {
     totalVolume: string;
     createdAt: string;
     currentNonce?: string;
+    payment_method?: any[];
+    paymentMethods?: any[];
 }

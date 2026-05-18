@@ -2,22 +2,35 @@ import { useEffect, useState } from "react";
 import { Offer } from "../models/offer";
 import { CreateOffer } from "../models/createOffer";
 import { UpdateOffer } from "../models/updateOffer";
+import { useUser } from "@/features/user/presentation/context/UserContext";
 
-export function useOffers() {
+export function useOffers(filters?: Record<string, string>) {
     const [offers, setOffers] = useState<Offer[]>([]);
     const [offer, setOffer] = useState<Offer | null>(null);
+    const { accessToken } = useUser();
+
+    const fetchOffers = async (currentFilters?: Record<string, string>) => {
+        try {
+            let url = `${process.env.NEXT_PUBLIC_API_URL}/offers`;
+            if (currentFilters) {
+                const params = new URLSearchParams(currentFilters);
+                const queryString = params.toString();
+                if (queryString) {
+                    url += `?${queryString}`;
+                }
+            }
+            const res = await fetch(url);
+            if (!res.ok) throw new Error('Offers not found');
+            const data = await res.json();
+            setOffers(data);
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
     useEffect(() => {
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/offers`)
-            .then(res => {
-                if (!res.ok) throw new Error('Offers not found');
-                return res.json();
-            })
-            .then(data => {
-                setOffers(data);
-            })
-            .catch(err => console.error(err));
-    }, []);
+        fetchOffers(filters);
+    }, [JSON.stringify(filters)]);
 
     const getOffer = async (offerId: string) => {
         try {
@@ -36,6 +49,7 @@ export function useOffers() {
                 method: "POST",
                 headers: {
                     "Content-type": "application/json",
+                    "Authorization": `Bearer ${accessToken}`
                 },
                 body: JSON.stringify(newOffer)
             })
@@ -44,6 +58,7 @@ export function useOffers() {
             return data;
         } catch (error) {
             console.error('Error', error);
+            throw error;
         }
     }
 
@@ -53,6 +68,7 @@ export function useOffers() {
                 method: "PATCH",
                 headers: {
                     "Content-type": "application/json",
+                    "Authorization": `Bearer ${accessToken}`
                 },
                 body: JSON.stringify(updateOffer)
             });
@@ -61,20 +77,25 @@ export function useOffers() {
             setOffer(data);
         } catch (error) {
             console.error('Error updating offer:', error);
+            throw error;
         }
     }
 
     const deleteOffer = async (offerId: string) => {
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/offers/${offerId}`, {
-                method: "DELETE"
+                method: "DELETE",
+                headers: {
+                    "Authorization": `Bearer ${accessToken}`
+                }
             });
             const data = await res.json();
             setOffer(data);
         } catch (error) {
             console.error(error);
+            throw error;
         }
     }
 
-    return { offers, offer, getOffer, createOffer, updateOffer, deleteOffer };
+    return { offers, offer, fetchOffers, getOffer, createOffer, updateOffer, deleteOffer };
 }

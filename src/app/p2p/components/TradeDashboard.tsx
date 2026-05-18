@@ -6,12 +6,35 @@ import { useOffers } from "@/features/offer/hooks/useOffers";
 import { useUsers } from "@/features/user/hooks/useUsers";
 import { useUser } from "@/features/user/presentation/context/UserContext";
 import { KycBanner } from "@/app/components/KycBanner";
+import { useWalletBalance } from "@/features/wallet/presentation/hooks/useWalletBalance";
+
+function MerchantBalance({ publicKey, assetCode }: { publicKey?: string; assetCode?: string }) {
+    const { balance, balances, isLoading } = useWalletBalance(publicKey || null);
+
+    if (isLoading) return <span className="animate-pulse">...</span>;
+    if (!publicKey) return <span>0.00</span>;
+
+    const normalizedAssetCode = assetCode === "XLM" || assetCode === "native" ? "native" : assetCode;
+
+    if (normalizedAssetCode === "native") {
+        return <span>{balance || "0.00"}</span>;
+    }
+
+    const asset = balances.find(b => b.asset_code === normalizedAssetCode);
+    if (!asset) return <span>0.00</span>;
+
+    return <span>{parseFloat(asset.balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>;
+}
 
 export function TradeDashboard() {
     const [tab, setTab] = useState("Buy");
     const [amount, setAmount] = useState("");
     const [isOpen, setIsOpen] = useState(false);
-    const { offers } = useOffers();
+    
+    // If user wants to "Buy", they need to see offers where the merchant is "selling".
+    // If user wants to "Sell", they need to see offers where the merchant is "buying".
+    const { offers } = useOffers({ type: tab === "Buy" ? "sell" : "buy" });
+    
     const { getUser, userFound } = useUsers();
     const { currentUser } = useUser();
 
@@ -140,7 +163,7 @@ export function TradeDashboard() {
                                 <p className="text-[10px] text-[#4b5563] mt-0.5 tracking-wide">1 {offer.assetCode || "BTC"} MARKET PRICE</p>
                             </div>
                             <div>
-                                <p className="text-sm text-white">Available: <span className="font-semibold">ver</span></p>
+                                <p className="text-sm text-white">Available: <span className="font-semibold"><MerchantBalance publicKey={userFound[offer.creatorId]?.publicKey} assetCode={offer.assetCode} /></span></p>
                                 <p className="text-[11px] text-[#6b7280] mt-0.5">Limit: {offer.minAmount} - {offer.maxAmount}</p>
                             </div>
                             <div className="flex">
@@ -157,7 +180,7 @@ export function TradeDashboard() {
                                         isVerified ? "bg-[#bced09] hover:bg-[#d4f53a] text-black hover:scale-105 active:scale-95" : "bg-gray-700 text-gray-400 cursor-not-allowed"
                                     }`}
                                 >
-                                    BUY
+                                    {tab === "Buy" ? "BUY" : "SELL"}
                                 </button>
                             </div>
                         </div>
