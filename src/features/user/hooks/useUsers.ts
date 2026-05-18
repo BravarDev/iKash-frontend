@@ -9,7 +9,7 @@ import { useUser } from "../presentation/context/UserContext";
 export function useUsers() {
     const [users, setUsers] = useState<Users[]>([]);
     const [user, setUser] = useState<Users | null>(null);
-    const [userFound, setUserFound] = useState<Record<string, CreateUser>>({})
+    const [userFound, setUserFound] = useState<Record<string, Users>>({})
     const { accessToken, setAccessToken, setCurrentUser } = useUser();
 
     useEffect(() => {
@@ -52,7 +52,7 @@ export function useUsers() {
         }
     }
 
-    const updateUser = async (userId: string, userData: CreateUser) => {
+    const updateUser = async (userId: string, userData: Partial<Users>): Promise<Users | null> => {
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`, {
                 method: "PATCH",
@@ -64,8 +64,11 @@ export function useUsers() {
             if (!res.ok) throw new Error('Update user error');
             const data = await res.json();
             setUser(data);
+            setCurrentUser(data);
+            return data;
         } catch (error) {
             console.error('Error updating user:', error);
+            return null;
         }
     }
 

@@ -10,6 +10,7 @@ interface UserContextType {
     setAccessToken: (token: string | null) => void;
     isLoading: boolean;
     setIsLoading: (loading: boolean) => void;
+    logout: () => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -53,6 +54,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const logout = () => {
+        setCurrentUser(null);
+        setAccessToken(null);
+        localStorage.removeItem('ikash_user');
+        localStorage.removeItem('ikash_token');
+        localStorage.removeItem('ikash_wallet_session');
+        window.location.href = "/";
+    };
+
     return (
         <UserContext.Provider value={{ 
             currentUser, 
@@ -60,7 +70,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
             accessToken,
             setAccessToken: handleSetAccessToken,
             isLoading, 
-            setIsLoading 
+            setIsLoading,
+            logout
         }}>
             {children}
         </UserContext.Provider>

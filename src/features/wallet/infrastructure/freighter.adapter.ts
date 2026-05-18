@@ -3,6 +3,7 @@ import {
     isAllowed,
     requestAccess,
     getAddress,
+    signTransaction,
 } from "@stellar/freighter-api";
 
 export const freighterAdapter = {
@@ -43,5 +44,19 @@ export const freighterAdapter = {
         } catch {
             return null;
         }
+    },
+
+    // Firma una transacción XDR con Freighter
+    async signTransaction(xdr: string, network: string = "TESTNET"): Promise<string> {
+        const res: any = await signTransaction(xdr, {
+            networkPassphrase:
+                network.toUpperCase() === "PUBLIC"
+                    ? "Public Global Stellar Network ; September 2015"
+                    : "Test SDF Network ; September 2015",
+        });
+        if (res?.error) throw new Error(res.error);
+        return typeof res === "string"
+            ? res
+            : res.signedTxXdr || res.signedTransaction || res.signedXDR || res;
     }
-}
+};

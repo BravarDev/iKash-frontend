@@ -4,12 +4,13 @@ import { usePathname, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { useWallet } from '@/features/wallet'
 import { useUser } from '@/features/user/presentation/context/UserContext'
+import { LayoutGrid, ArrowLeftRight, Database, Wallet, Settings } from 'lucide-react';
 
 const links = [
-    { href: '/dashboard', label: 'Home', icon: '/home-icon.svg', selected: '/home-selected-icon.svg' },
-    { href: '/p2p', label: 'P2P', icon: '/p2p-icon.svg', selected: '/p2p-selected-icon.svg' },
-    { href: '/transactions', label: 'Transactions', icon: '/transaction-icon.svg', selected: '/transaction-selected-icon.svg' },
-    { href: '/wallet', label: 'Wallet', icon: '/wallet-icon.svg', selected: '/home-selected-icon.svg' },
+    { href: '/dashboard', label: 'Home', icon: LayoutGrid, selected: '/home-selected-icon.svg' },
+    { href: '/p2p', label: 'P2P', icon: ArrowLeftRight, selected: '/p2p-selected-icon.svg' },
+    { href: '/transactions', label: 'Transactions', icon: Database, selected: '/transaction-selected-icon.svg' },
+    { href: '/wallet', label: 'Wallet', icon: Wallet, selected: '/home-selected-icon.svg' },
 ]
 
 export function Aside() {
@@ -38,35 +39,28 @@ export function Aside() {
             </div>
 
             <nav className="flex flex-col gap-7.5 pt-20">
-                {links.map(({ href, label, icon, selected }) => (
-                    <Link
-                        key={href}
-                        href={href}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 ease-in-out
-                        ${pathname === href
+                {links.map((link) => {
+                    const isActive = pathname === link.href;
+                    const IconComponent = link.icon;
+
+                    return (
+                        <Link
+                            key={link.href}
+                            href={link.href}
+                            className={`flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 ease-in-out
+                            ${isActive
                                 ? 'text-[#BCED09] font-semibold'
                                 : 'text-[#8F8389] font-medium hover:bg-[#161618] hover:text-white'
                             }`}
-                    >
-                        <span>
-                            {pathname === href
-                                ? <Image
-                                    src={selected}
-                                    width={18}
-                                    height={18}
-                                    alt='iconos del aside'
-                                />
-                                : <Image
-                                    src={icon}
-                                    width={18}
-                                    height={18}
-                                    alt='iconos del aside'
-                                />
-                            }
-                        </span>
-                        <span className='text-[18px]'>{label}</span>
+                        >
+                            <IconComponent 
+                                size={18} 
+                                strokeWidth={isActive ? 2.5 : 2} 
+                            />
+                            <span className='text-[18px]'>{link.label}</span>
                     </Link>
-                ))}
+                    );
+                })}
             </nav>
 
             <div className="mt-auto flex flex-col gap-4 pb-5">
@@ -74,16 +68,16 @@ export function Aside() {
 
                 <Link
                     href="/settings"
-                    className="flex items-center gap-3 px-3 py-2 rounded-md text-[#8F8389] font-medium transition-all duration-200 ease-in-out hover:bg-[#161618] hover:text-white"
+                    className={`flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 ease-in-out ${
+                        pathname.startsWith('/settings')
+                            ? 'text-[#BCED09] font-semibold'
+                            : 'text-[#8F8389] font-medium hover:bg-[#161618] hover:text-white'
+                    }`}
                 >
-                    <span>
-                        <Image
-                            src='/settings-icon.svg'
-                            width={20}
-                            height={20}
-                            alt='icono de settings del aside'
-                        />
-                    </span>
+                    <Settings 
+                        size={18} 
+                        strokeWidth={pathname.startsWith('/settings') ? 2.5 : 2} 
+                    />
                     <span className='text-[18px]'>Settings</span>
                 </Link>
 

@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { CreateOfferModal } from "./CreateOfferModal";
+import { ConfirmOrderModal } from "./ConfirmOrderModal";
 import { useOffers } from "@/features/offer/hooks/useOffers";
 import { useUsers } from "@/features/user/hooks/useUsers";
 import { useUser } from "@/features/user/presentation/context/UserContext";
 import { KycBanner } from "@/app/components/KycBanner";
 import { useWalletBalance } from "@/features/wallet/presentation/hooks/useWalletBalance";
+import { Offer } from "@/features/offer/models/offer";
 
 function MerchantBalance({ publicKey, assetCode }: { publicKey?: string; assetCode?: string }) {
     const { balance, balances, isLoading } = useWalletBalance(publicKey || null);
@@ -30,10 +32,13 @@ export function TradeDashboard() {
     const [tab, setTab] = useState("Buy");
     const [amount, setAmount] = useState("");
     const [isOpen, setIsOpen] = useState(false);
+    const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
     
     // If user wants to "Buy", they need to see offers where the merchant is "selling".
     // If user wants to "Sell", they need to see offers where the merchant is "buying".
     const { offers } = useOffers({ type: tab === "Buy" ? "sell" : "buy" });
+    // Filter out offers that have been executed/archived server-side
+    const visibleOffers = offers.filter(o => !o.executed);
     
     const { getUser, userFound } = useUsers();
     const { currentUser } = useUser();
@@ -144,7 +149,7 @@ export function TradeDashboard() {
                 </div>
 
                 <div className="space-y-2">
-                    {offers.map((offer) => (
+                    {visibleOffers.map((offer) => (
                         <div
                             key={offer.offerId}
                             className="grid grid-cols-4 items-center bg-[#161618] border border-[#1F2937] rounded-3xl px-4 py-5 hover:border-[#2a2a2a] hover:bg-[#181818] transition-all duration-200"
@@ -174,6 +179,7 @@ export function TradeDashboard() {
                                             alert("KYC verification required to trade.");
                                             return;
                                         }
+                                        setSelectedOffer(offer);
                                     }}
                                     title={!isVerified ? "KYC verification required" : ""}
                                     className={`text-sm font-bold px-6 py-2.5 rounded-lg transition-all duration-200 ${
@@ -190,6 +196,14 @@ export function TradeDashboard() {
 
             {isOpen && (
                 <CreateOfferModal onClose={() => setIsOpen(false)} />
+            )}
+
+            {selectedOffer && userFound[selectedOffer.creatorId] && (
+                <ConfirmOrderModal
+                    offer={selectedOffer}
+                    creator={userFound[selectedOffer.creatorId]}
+                    onClose={() => setSelectedOffer(null)}
+                />
             )}
         </div>
     );

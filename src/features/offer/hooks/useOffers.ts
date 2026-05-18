@@ -7,7 +7,7 @@ import { useUser } from "@/features/user/presentation/context/UserContext";
 export function useOffers(filters?: Record<string, string>) {
     const [offers, setOffers] = useState<Offer[]>([]);
     const [offer, setOffer] = useState<Offer | null>(null);
-    const { accessToken } = useUser();
+    const { accessToken, logout } = useUser();
 
     const fetchOffers = async (currentFilters?: Record<string, string>) => {
         try {
@@ -53,7 +53,16 @@ export function useOffers(filters?: Record<string, string>) {
                 },
                 body: JSON.stringify(newOffer)
             })
-            if (!res.ok) throw new Error('Create offer error');
+            if (res.status === 401) {
+                logout();
+                throw new Error("Su sesión ha expirado por inactividad. Cerrando sesión...");
+            }
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                console.error('Backend Create Offer Error:', errData);
+                const errMsg = errData.message ? (Array.isArray(errData.message) ? errData.message.join(', ') : errData.message) : 'Create offer error';
+                throw new Error(errMsg);
+            }
             const data = await res.json();
             return data;
         } catch (error) {

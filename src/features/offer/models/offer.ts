@@ -6,5 +6,8 @@ export interface Offer {
     price: string,
     minAmount: string,
     maxAmount: string,
-    status: string
+    status: string,
+    executed?: boolean,
+    payment_methods?: any[],
+    paymentMethods?: any[]
 }

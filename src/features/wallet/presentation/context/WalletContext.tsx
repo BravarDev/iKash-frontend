@@ -30,7 +30,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
     const router = useRouter();
     const { getOrCreateByWallet } = useUsers();
-    const { setCurrentUser, setAccessToken } = useUser();
+    const { setCurrentUser, setAccessToken, logout } = useUser();
 
     // Use refs to avoid stale closures in useEffect without triggering re-runs
     const getOrCreateRef = useRef(getOrCreateByWallet);
@@ -100,11 +100,16 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
     const disconnect = useCallback(() => {
         walletService.clearSession();
+        logout();
         setState(initialState);
+    }, [logout]);
+
+    const signTransaction = useCallback(async (xdr: string, network?: string) => {
+        return await walletService.signTransaction(xdr, network);
     }, []);
 
     return (
-        <Context.Provider value={{ ...state, connect, disconnect }}>
+        <Context.Provider value={{ ...state, connect, disconnect, signTransaction }}>
             {children}
         </Context.Provider>
     );

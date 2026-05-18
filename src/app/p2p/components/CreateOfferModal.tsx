@@ -24,8 +24,8 @@ export function CreateOfferModal({ onClose }: CloseModalProps) {
 
     const nav = useRouter();
 
-    const [checked, setChecked] = useState<number[]>([]);
-    const toggle = (id: number) => {
+    const [checked, setChecked] = useState<string[]>([]);
+    const toggle = (id: string) => {
         setChecked(prev =>
             prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
         );
@@ -42,14 +42,19 @@ export function CreateOfferModal({ onClose }: CloseModalProps) {
             return;
         }
 
-        const newOffer = await createOffer({
-            ...form,
-            creatorId: currentUser.userId,
-            type: tab.toLowerCase(),
-            assetCode: cryptoAsset.value,
-        });
-        if (newOffer) {
-            window.location.reload();
+        try {
+            const newOffer = await createOffer({
+                ...form,
+                creatorId: currentUser.userId,
+                type: tab.toLowerCase(),
+                assetCode: cryptoAsset.value,
+                paymentMethodIds: checked.map(String),
+            });
+            if (newOffer) {
+                window.location.reload();
+            }
+        } catch (err: any) {
+            alert(`Failed to create offer: ${err.message || err}`);
         }
     }
 
