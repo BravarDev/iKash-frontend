@@ -204,52 +204,70 @@ export function CreateOfferModal({ onClose }: CloseModalProps) {
                             <p className="text-[#CBD5E1]">Payment Methods</p>
                             <div className="flex flex-col gap-4">
                                 {/* Legacy payment methods */}
-                                {currentUser?.paymentMethods?.map((pm) => (
-                                    <div
-                                        key={pm.paymentId}
-                                        className={`flex w-99.75 h-17.5 border rounded-xl items-center gap-3 cursor-pointer
-                                                ${checked.includes(pm.paymentId) ? 'border-[#DAFF0066]' : 'border-[#1C2128]'}`}
-                                        onClick={() => toggle(pm.paymentId as any)}
-                                    >
-                                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors m-3
-                                                ${checked.includes(pm.paymentId) ? 'bg-[#DAFF00] border-[#DAFF00]' : 'bg-transparent border-gray-600'}`}
+                                {currentUser?.paymentMethods?.map((pm) => {
+                                    const id = pm.paymentId || pm.payment_id || pm.id;
+                                    const name = pm.payment_provider?.name || pm.paymentProvider?.name || pm.bankName || pm.type || "Payment Method";
+                                    const identifier = pm.accountIdentifier || pm.account_identifier || pm.accountDetails || "";
+                                    const owner = pm.beneficiaryName || pm.beneficiary_name || "";
+                                    
+                                    return (
+                                        <div
+                                            key={id}
+                                            className={`flex w-99.75 h-17.5 border rounded-xl items-center gap-3 cursor-pointer
+                                                    ${checked.includes(id) ? 'border-[#DAFF0066]' : 'border-[#1C2128]'}`}
+                                            onClick={() => toggle(id as any)}
                                         >
-                                            {checked.includes(pm.paymentId) && (
-                                                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="black" strokeWidth={3}>
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            )}
+                                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors m-3
+                                                    ${checked.includes(id) ? 'bg-[#DAFF00] border-[#DAFF00]' : 'bg-transparent border-gray-600'}`}
+                                            >
+                                                {checked.includes(id) && (
+                                                    <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="black" strokeWidth={3}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                )}
+                                            </div>
+                                            <div className='flex flex-col'>
+                                                <span className="text-[#F1F5F9] text-sm select-none">{name}</span>
+                                                <span className="text-[#94A3B8] text-xs select-none">
+                                                    {identifier}{owner ? ` - ${owner}` : ''}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div className='flex flex-col'>
-                                            <span className="text-[#F1F5F9] text-sm select-none">{pm.bankName}</span>
-                                            <span className="text-[#F1F5F9] text-sm select-none">{pm.accountDetails}</span>
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
 
                                 {/* New payment_method (v2) */}
-                                {currentUser?.payment_method?.map((pm) => (
-                                    <div
-                                        key={pm.payment_id}
-                                        className={`flex w-99.75 h-17.5 border rounded-xl items-center gap-3 cursor-pointer
-                                                ${checked.includes(pm.payment_id) ? 'border-[#DAFF0066]' : 'border-[#1C2128]'}`}
-                                        onClick={() => toggle(pm.payment_id as any)}
-                                    >
-                                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors m-3
-                                                ${checked.includes(pm.payment_id) ? 'bg-[#DAFF00] border-[#DAFF00]' : 'bg-transparent border-gray-600'}`}
+                                {currentUser?.payment_method?.map((pm) => {
+                                    const id = pm.payment_id || pm.paymentId || pm.id;
+                                    const name = pm.payment_provider?.name || pm.paymentProvider?.name || pm.type || "Payment Method";
+                                    const identifier = pm.account_identifier || pm.accountIdentifier || pm.accountDetails || "";
+                                    const owner = pm.beneficiary_name || pm.beneficiaryName || "";
+                                    
+                                    return (
+                                        <div
+                                            key={id}
+                                            className={`flex w-99.75 h-17.5 border rounded-xl items-center gap-3 cursor-pointer
+                                                    ${checked.includes(id) ? 'border-[#DAFF0066]' : 'border-[#1C2128]'}`}
+                                            onClick={() => toggle(id as any)}
                                         >
-                                            {checked.includes(pm.payment_id) && (
-                                                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="black" strokeWidth={3}>
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            )}
+                                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors m-3
+                                                    ${checked.includes(id) ? 'bg-[#DAFF00] border-[#DAFF00]' : 'bg-transparent border-gray-600'}`}
+                                            >
+                                                {checked.includes(id) && (
+                                                    <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="black" strokeWidth={3}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                )}
+                                            </div>
+                                            <div className='flex flex-col'>
+                                                <span className="text-[#F1F5F9] text-sm select-none">{name}</span>
+                                                <span className="text-[#94A3B8] text-xs select-none">
+                                                    {identifier}{owner ? ` - ${owner}` : ''}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div className='flex flex-col'>
-                                            <span className="text-[#F1F5F9] text-sm select-none">{pm.payment_provider?.name || pm.type}</span>
-                                            <span className="text-[#F1F5F9] text-sm select-none">{pm.account_identifier} - {pm.beneficiary_name}</span>
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                                 
                                 {(!currentUser?.paymentMethods?.length && !currentUser?.payment_method?.length) && (
                                     <p className="text-[#94A3B8] text-sm italic">No payment methods found. Add one in settings.</p>

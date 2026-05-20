@@ -200,7 +200,7 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
                 if (!isBuyOperation) {
                     if (!unsignedXdr) {
                         alert("Escrow opened but no transaction to sign. Merchant must fund the escrow from dashboard.");
-                        router.push("/transactions");
+                        router.push("/trade/" + orderData.orderId.replace(/-/g, ""));
                         return;
                     }
 
@@ -208,25 +208,25 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
                     try {
                         const signedXdr = await walletService.signTransaction(unsignedXdr);
                         await syncEscrow({ escrowId: escrowId, action: "fund", signedXdr });
-                        alert("Escrow funded successfully. Redirecting to transactions.");
-                        router.push("/transactions");
+                        alert("Escrow funded successfully. Redirecting to trade view.");
+                        router.push("/trade/" + orderData.orderId.replace(/-/g, ""));
                         return;
                     } catch (signErr) {
                         console.error("Signing or sync failed:", signErr);
-                        alert("Failed to sign or sync the escrow transaction. Merchant should fund the escrow from Transactions page.");
-                        router.push("/transactions");
+                        alert("Failed to sign or sync the escrow transaction. Merchant should fund the escrow from trade page.");
+                        router.push("/trade/" + orderData.orderId.replace(/-/g, ""));
                         return;
                     }
                 }
 
                 // If current user is the buyer -> notify and redirect
                 alert("Order initiated and escrow contract created. The seller has been notified to fund the escrow.");
-                router.push("/transactions");
+                router.push("/trade/" + orderData.orderId.replace(/-/g, ""));
 
             } catch (escErr) {
                 console.error("Error opening escrow:", escErr);
                 alert("Order created but failed to open escrow. Please contact support.");
-                router.push("/transactions");
+                router.push("/trade/" + orderData.orderId.replace(/-/g, ""));
             }
         } catch (err) {
             console.error(err);
