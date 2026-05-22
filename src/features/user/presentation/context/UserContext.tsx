@@ -1,7 +1,18 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { Users } from '../../models/users';
+import { walletService } from '../../../wallet/application/wallet.service';
+
+function isTokenExpired(token: string | null) {
+    if (!token) return true;
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.exp * 1000 < Date.now();
+    } catch (e) {
+        return true;
+    }
+}
 
 interface UserContextType {
     currentUser: Users | null;
@@ -20,10 +31,28 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const [accessToken, setAccessToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
+    const logout = useCallback(() => {
+        setCurrentUser(null);
+        setAccessToken(null);
+        localStorage.removeItem('ikash_user');
+        localStorage.removeItem('ikash_token');
+        localStorage.removeItem('ikash_wallet_session');
+        walletService.clearSession();
+        window.location.href = "/";
+    }, []);
+
     // Optional: Load user from localStorage or similar if needed
     useEffect(() => {
-        const storedUser = localStorage.getItem('ikash_user');
         const storedToken = localStorage.getItem('ikash_token');
+        if (storedToken) {
+            if (isTokenExpired(storedToken)) {
+                logout();
+                return;
+            }
+            setAccessToken(storedToken);
+        }
+
+        const storedUser = localStorage.getItem('ikash_user');
         if (storedUser) {
             try {
                 setCurrentUser(JSON.parse(storedUser));
@@ -31,10 +60,20 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 console.error('Error parsing stored user:', e);
             }
         }
-        if (storedToken) {
-            setAccessToken(storedToken);
-        }
-    }, []);
+    }, [logout]);
+
+    // Periodically check for token expiration
+    useEffect(() => {
+        if (!accessToken) return;
+
+        const interval = setInterval(() => {
+            if (isTokenExpired(accessToken)) {
+                logout();
+            }
+        }, 30000); // Check every 30 seconds
+
+        return () => clearInterval(interval);
+    }, [accessToken, logout]);
 
     const handleSetCurrentUser = (user: Users | null) => {
         setCurrentUser(user);
@@ -54,14 +93,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const logout = () => {
-        setCurrentUser(null);
-        setAccessToken(null);
-        localStorage.removeItem('ikash_user');
-        localStorage.removeItem('ikash_token');
-        localStorage.removeItem('ikash_wallet_session');
-        window.location.href = "/";
-    };
+    // logout defined above via useCallback
 
     return (
         <UserContext.Provider value={{ 

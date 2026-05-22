@@ -19,7 +19,7 @@ interface ConfirmOrderModalProps {
 export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModalProps) {
     const { currentUser } = useUser();
     const { createOrder } = useOrders();
-    const { openEscrow, syncEscrow } = useEscrows();
+    const { syncEscrow } = useEscrows();
     const router = useRouter();
 
     const [amountToPay, setAmountToPay] = useState("");
@@ -166,12 +166,22 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
             const fiatAmountVal = isBuyOperation ? inputNum : inputNum * priceNum;
             const assetAmountVal = isBuyOperation ? inputNum / priceNum : inputNum;
 
-            const orderData = await createOrder({
+            const sellerAddress = isBuyOperation ? creator?.publicKey : currentUser?.publicKey;
+            const buyerAddress = isBuyOperation ? currentUser?.publicKey : creator?.publicKey;
+
+            // Single unified call — backend deploys escrow on TW first,
+            // then persists Order + EscrowOnChain atomically.
+            // If escrow deployment fails, no DB record is created.
+            const orderData: any = await createOrder({
                 offerId: offer.offerId,
                 buyerId: isBuyOperation ? currentUser.userId : offer.creatorId,
                 sellerId: isBuyOperation ? offer.creatorId : currentUser.userId,
                 fiatAmount: fiatAmountVal.toString(),
                 assetAmount: assetAmountVal.toString(),
+                sellerAddress: sellerAddress || "",
+                buyerAddress: buyerAddress || "",
+                assetCode: offer.assetCode || "XLM",
+                title: `Order for ${offer.assetCode || "XLM"}`,
             });
 
             if (!orderData?.orderId) {
@@ -180,58 +190,40 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
                 return;
             }
 
-            // Open escrow on backend
-            try {
-                const sellerAddress = isBuyOperation ? creator?.publicKey : currentUser?.publicKey;
-                const buyerAddress = isBuyOperation ? currentUser?.publicKey : creator?.publicKey;
+            const unsignedXdr = orderData?.unsignedFundTransaction || null;
+            const escrowId = orderData?.escrow?.escrowId || null;
 
-                const escrowResp: any = await openEscrow({
-                    orderId: orderData.orderId,
-                    sellerAddress: sellerAddress || "",
-                    buyerAddress: buyerAddress || "",
-                    amount: Number(assetAmountVal || 0),
-                    title: `Order ${orderData.orderId}`,
-                    assetCode: offer.assetCode || "XLM",
-                });
-
-                const unsignedXdr = escrowResp?.unsignedFundTransaction || escrowResp?.unsignedXDR || escrowResp?.unsignedTransaction || null;
-                const escrowId = escrowResp?.escrowId || escrowResp?.id || null;
-
-                // If current user is the seller -> prompt wallet signing and sync
-                if (!isBuyOperation) {
-                    if (!unsignedXdr) {
-                        alert("Escrow opened but no transaction to sign. Merchant must fund the escrow from dashboard.");
-                        router.push("/trade/" + orderData.orderId.replace(/-/g, ""));
-                        return;
-                    }
-
-                    // Sign using connected wallet
-                    try {
-                        const signedXdr = await walletService.signTransaction(unsignedXdr);
-                        await syncEscrow({ escrowId: escrowId, action: "fund", signedXdr });
-                        alert("Escrow funded successfully. Redirecting to trade view.");
-                        router.push("/trade/" + orderData.orderId.replace(/-/g, ""));
-                        return;
-                    } catch (signErr) {
-                        console.error("Signing or sync failed:", signErr);
-                        alert("Failed to sign or sync the escrow transaction. Merchant should fund the escrow from trade page.");
-                        router.push("/trade/" + orderData.orderId.replace(/-/g, ""));
-                        return;
-                    }
+            // If current user is the seller -> prompt wallet signing and sync
+            if (!isBuyOperation) {
+                if (!unsignedXdr) {
+                    alert("Order and escrow created. Merchant must fund the escrow from dashboard.");
+                    router.push("/trade/" + orderData.orderId.replace(/-/g, ""));
+                    return;
                 }
 
-                // If current user is the buyer -> notify and redirect
-                alert("Order initiated and escrow contract created. The seller has been notified to fund the escrow.");
-                router.push("/trade/" + orderData.orderId.replace(/-/g, ""));
-
-            } catch (escErr) {
-                console.error("Error opening escrow:", escErr);
-                alert("Order created but failed to open escrow. Please contact support.");
-                router.push("/trade/" + orderData.orderId.replace(/-/g, ""));
+                // Sign using connected wallet
+                try {
+                    const signedXdr = await walletService.signTransaction(unsignedXdr);
+                    await syncEscrow({ escrowId: escrowId, action: "fund", signedXdr });
+                    alert("Escrow funded successfully. Redirecting to trade view.");
+                    router.push("/trade/" + orderData.orderId.replace(/-/g, ""));
+                    return;
+                } catch (signErr) {
+                    console.error("Signing or sync failed:", signErr);
+                    alert("Failed to sign or sync the escrow transaction. Merchant should fund the escrow from trade page.");
+                    router.push("/trade/" + orderData.orderId.replace(/-/g, ""));
+                    return;
+                }
             }
-        } catch (err) {
+
+            // If current user is the buyer -> notify and redirect
+            alert("Order initiated and escrow contract created. The seller has been notified to fund the escrow.");
+            router.push("/trade/" + orderData.orderId.replace(/-/g, ""));
+
+        } catch (err: any) {
             console.error(err);
-            alert("Error initiating order. Please try again.");
+            const msg = err?.message || "Error initiating order. Please try again.";
+            alert(msg);
         } finally {
             setIsSubmitting(false);
         }
@@ -239,11 +231,39 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
 
     return (
         <div 
-            className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn"
-            onClick={onClose}
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => { if (!isSubmitting) onClose(); }}
         >
+            <style>
+                {`
+                @keyframes slideUpCenter {
+                    0% { transform: translateY(50px); opacity: 0; }
+                    100% { transform: translateY(0); opacity: 1; }
+                }
+                .animate-slideUpCenter {
+                    animation: slideUpCenter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                }
+                `}
+            </style>
+            
+            {isSubmitting ? (
+                <div className="flex flex-col items-center justify-center animate-slideUpCenter">
+                    <div className="relative flex items-center justify-center w-28 h-28 mb-8">
+                        <div className="absolute w-full h-full border-4 border-[#DAFF00]/10 rounded-full"></div>
+                        <div className="absolute w-full h-full border-4 border-[#DAFF00] rounded-full border-t-transparent animate-spin drop-shadow-[0_0_20px_rgba(218,255,0,0.6)]"></div>
+                        <div className="absolute w-20 h-20 border-4 border-[#DAFF00]/20 rounded-full border-b-transparent animate-[spin_1.5s_linear_infinite_reverse]"></div>
+                        <div className="absolute w-12 h-12 border-4 border-[#DAFF00]/30 rounded-full border-l-transparent animate-[spin_2s_linear_infinite]"></div>
+                    </div>
+                    <h3 className="text-[#DAFF00] font-semibold text-2xl tracking-wide animate-pulse mb-3 font-space text-center">
+                        Initiating Trade...
+                    </h3>
+                    <p className="text-[#E4E1E9]/70 text-sm text-center max-w-[340px] px-4 leading-relaxed font-space">
+                        Please wait. We are creating the order, securing the escrow contract on the blockchain, and syncing the database. This might take a moment.
+                    </p>
+                </div>
+            ) : (
             <div 
-                className="bg-[#0E0E13] border border-[#454932]/20 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] rounded-lg w-full max-w-[576px] flex flex-col overflow-hidden"
+                className="bg-[#0E0E13] border border-[#454932]/20 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] rounded-lg w-full max-w-[576px] flex flex-col overflow-hidden animate-fadeIn"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
@@ -442,6 +462,7 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
                     </div>
                 </div>
             </div>
+            )}
         </div>
     );
 }

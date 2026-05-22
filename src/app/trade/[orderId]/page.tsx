@@ -4,7 +4,8 @@ import { use, useEffect, useState, useCallback } from "react";
 import { Aside } from "@/app/components/Aside";
 import { Header } from "@/app/components/Header";
 import { TradeDetails } from "../components/TradeDetails";
-import { TradeEvidence } from "../components/TradeEvidence";
+import { TradeEvidenceUploader } from "../components/TradeEvidenceUploader";
+import { EvidencePreview } from "../components/EvidencePreview";
 import { Chat } from "../../p2p/components/Chat";
 import { useUser } from "@/features/user/presentation/context/UserContext";
 import { useOrders } from "@/features/order/hooks/useOrders";
@@ -96,7 +97,6 @@ export default function TradePage({ params }: PageProps) {
         );
     }
 
-    // Determine user's role
     const isBuyer = currentUser.userId === order.buyerId;
     const isSeller = currentUser.userId === order.sellerId;
 
@@ -120,7 +120,6 @@ export default function TradePage({ params }: PageProps) {
     const priceVal = parseFloat(order.offer?.price || "0") || 0;
     const totalVal = parseFloat(order.fiatAmount) || (amountVal * priceVal);
     
-    // Extract payment details
     const paymentMethodObj = order.offer?.payment_methods?.[0] || order.offer?.paymentMethods?.[0];
     
     let paymentType: "platform" | "web" | "bank" = "bank";
@@ -135,7 +134,6 @@ export default function TradePage({ params }: PageProps) {
 
     const paymentMethodLabel = paymentMethodObj?.payment_provider?.name || paymentMethodObj?.bankName || "Bank Transfer SEPA";
     
-    // Support both Prisma camelCase serialization and standard snake_case
     const accountIdentifier = 
         paymentMethodObj?.accountIdentifier || 
         paymentMethodObj?.account_identifier || 
@@ -148,96 +146,178 @@ export default function TradePage({ params }: PageProps) {
         order.seller?.alias || 
         "QuantVortex_LP";
 
-    // Escrow info
     const escrowId = order.escrow?.escrowId;
     const escrowStatus = order.escrow?.escrowStatus || "pending";
     const buyerAddress = order.escrow?.buyerAddress || order.buyer?.publicKey;
     const sellerAddress = order.escrow?.sellerAddress || order.seller?.publicKey;
 
-    // Counterparty Info
     const counterpartyUser = isBuyer ? order.seller : order.buyer;
+    const isCompleted = order.escrow?.escrowStatus === 'released';
 
     return (
         <div className="flex h-screen w-full overflow-hidden bg-[#010308]">
             <Aside />
             <div className="flex flex-col flex-1 min-w-0 h-full overflow-hidden">
-                {/* 1. Header (96px height) */}
                 <Header description="trading floor" title="p2p marketplace" />
                 
-                {/* 2. Main Flex Container below Header (984px height) */}
                 <main className="flex flex-row items-start w-full h-[calc(100vh-96px)] overflow-hidden bg-[#010308] min-h-0 select-none">
                     
-                    {/* LEFT COLUMN: Section - Center Column: Transaction Details (1172px width) */}
+                    {/* COLUMNA IZQUIERDA: Panel de Transacción */}
                     <div className="w-[1172px] h-full flex flex-col border-r border-[rgba(69,73,50,0.1)] bg-[#010308] shrink-0 min-h-0">
                         
-                        {/* Top Subheader Bar (64px height) */}
+                        {/* Subheader superior de navegación */}
                         <div className="h-[64px] border-b border-[rgba(69,73,50,0.1)] bg-[rgba(19,19,24,0.6)] backdrop-blur-md px-[60px] flex items-center justify-between shrink-0">
-                            {/* Left: Back to orders link */}
                             <button 
                                 onClick={() => window.history.back()}
                                 className="text-[#9CA3AF] hover:text-white flex items-center gap-2 text-[14px] font-bold uppercase tracking-[-0.35px] transition-colors cursor-pointer font-space"
                             >
                                 <ArrowLeft className="w-4 h-4 text-[#9CA3AF] stroke-[3px]" /> BACK TO ORDERS
                             </button>
-                            
-                            {/* Center: Blinking Transaction indicator */}
                             <div className="flex items-center gap-3 select-none">
-                                <span className="w-2 h-2 rounded-full bg-[#DAFF00] animate-pulse shadow-[0_0_8px_rgba(218,255,0,0.6)]" />
-                                <span className="text-[#DAFF00] text-[12px] font-bold tracking-[2.4px] uppercase font-space">
-                                    TRANSACTION IN PROGRESS
-                                </span>
+                                {!isCompleted && (
+                                    <>
+                                        <span className="w-2 h-2 rounded-full bg-[#DAFF00] animate-pulse shadow-[0_0_8px_rgba(218,255,0,0.6)]" />
+                                        <span className="text-[#DAFF00] text-[12px] font-bold tracking-[2.4px] uppercase font-space">
+                                            TRANSACTION IN PROGRESS
+                                        </span>
+                                    </>
+                                )}
                             </div>
-
-                            {/* Right: Order details title */}
                             <h2 className="text-white font-black text-[20px] leading-7 uppercase tracking-normal font-space">
                                 ORDER DETAILS
                             </h2>
                         </div>
 
-                        {/* Main Left Content Panel Area */}
-                        <div className="flex-grow flex flex-col p-[40px_64px] gap-[32px] overflow-hidden justify-center items-center min-h-0">
-                            {/* Cards Row (1043px width) */}
-                            <div className="flex flex-row items-start gap-[24px] shrink-0 min-h-0 w-[1043px] h-[571.5px]">
-                                {/* Card 1: BUYING (616.2px width, 571.5px height) */}
-                                <TradeDetails 
-                                    role={role}
-                                    amount={amountVal}
-                                    assetCode={order.offer?.assetCode || "XLM"}
-                                    unitPrice={priceVal}
-                                    total={totalVal}
-                                    paymentMethod={paymentMethodLabel}
-                                    paymentType={paymentType}
-                                    accountIdentifier={accountIdentifier}
-                                    accountOwner={accountOwner}
-                                    counterpartyName={counterpartyUser?.alias || (isBuyer ? "Seller" : "Buyer")}
-                                    counterpartyRate={isBuyer ? "90.8%" : "95.5%"}
-                                    counterpartyKyc={counterpartyUser?.kycStatus === "approved"}
-                                />
+                        {/* Contenedor Principal Escalado por Rol */}
+                        <div className="grow flex flex-col p-[32px_64px_40px_64px] overflow-auto justify-between items-center min-h-0 w-full">
+                            
+                            {isBuyer ? (
+                                /* ========================================================= */
+                                /* FLUJO DE COMPRADOR (Layout Proporcional 60/40)            */
+                                /* ========================================================= */
+                                <div className="flex flex-col items-center justify-center h-full w-full">
+                                    <div className="flex flex-row items-start gap-[24px] shrink-0 min-h-0 w-[1043px] h-[571.5px]">
+                                        <div className="w-[616.2px] h-full shrink-0">
+                                            <TradeDetails 
+                                                role={role}
+                                                amount={amountVal}
+                                                assetCode={order.offer?.assetCode || "XLM"}
+                                                unitPrice={priceVal}
+                                                total={totalVal}
+                                                paymentMethod={paymentMethodLabel}
+                                                paymentType={paymentType}
+                                                accountIdentifier={accountIdentifier}
+                                                accountOwner={accountOwner}
+                                                counterpartyName={counterpartyUser?.alias || "Seller"}
+                                                counterpartyRate="99.8%"
+                                                counterpartyKyc={counterpartyUser?.kycStatus === "approved"}
+                                            />
+                                        </div>
+                                        <div className="w-[402.8px] h-full shrink-0">
+                                            <TradeEvidenceUploader 
+                                                orderId={order.orderId}
+                                                escrowId={escrowId}
+                                                escrowStatus={escrowStatus}
+                                                buyerAddress={buyerAddress}
+                                                amount={amountVal}
+                                                onStatusChange={fetchOrder}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                /* ========================================================= */
+                                /* FLUJO DE VENDEDOR (Layout Simétrico 50/50 con Banner)      */
+                                /* ========================================================= */
+                                <div className="flex flex-col gap-6 w-full h-full items-center justify-center">
+                                    
+                                    {/* Banner superior del Vendedor: Estado y Contador */}
+                                    {!isCompleted && (
+                                        <div className="w-full bg-[rgba(26,27,33,0.7)] border border-[rgba(218,255,0,0.15)] rounded-[12px] p-[18px_28px] flex items-center justify-between shrink-0">
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="w-2 h-2 rounded-full bg-[#DAFF00] shadow-[0_0_6px_#DAFF00]" />
+                                                    <span className="text-[#DAFF00] font-black text-[15px] tracking-[1.5px] uppercase font-space">
+                                                        AWAITING BUYER PAYMENT
+                                                    </span>
+                                                </div>
+                                                <span className="text-[#9CA3AF] text-[13px] font-space font-medium uppercase tracking-wider">
+                                                    Order #{order.orderId?.split("-")[0]?.toUpperCase() || "P2P-B829"}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-col items-end justify-center">
+                                                <span className="text-white font-black text-[28px] font-space leading-none tracking-wide">
+                                                    14:52
+                                                </span>
+                                                <span className="text-[#9CA3AF] text-[10px] font-bold uppercase tracking-[1px] font-space mt-1">
+                                                    REMAINING TIME
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
 
-                                {/* Card 2: Evidence Area (402.8px width, 571.5px height) */}
-                                <TradeEvidence 
-                                    role={role}
-                                    orderId={order.orderId}
-                                    escrowId={escrowId}
-                                    escrowStatus={escrowStatus}
-                                    buyerAddress={buyerAddress}
-                                    sellerAddress={sellerAddress}
-                                    amount={amountVal}
-                                    expiresAt={order.expiresAt as string | undefined}
-                                    onStatusChange={fetchOrder}
-                                />
-                            </div>
+                                    {/* Columnas Simétricas (50 / 50) */}
+                                    <div className="grid grid-cols-2 gap-6 w-full">
+                                        <TradeDetails 
+                                            role={role}
+                                            amount={amountVal}
+                                            assetCode={order.offer?.assetCode || "XLM"}
+                                            unitPrice={priceVal}
+                                            total={totalVal}
+                                            paymentMethod={paymentMethodLabel}
+                                            paymentType={paymentType}
+                                            accountIdentifier={accountIdentifier}
+                                            accountOwner={accountOwner}
+                                            counterpartyName={counterpartyUser?.alias || "Buyer"}
+                                            counterpartyRate="95.5%"
+                                            counterpartyKyc={counterpartyUser?.kycStatus === "approved"}
+                                        />
+                                        <EvidencePreview 
+                                            orderId={order.orderId}
+                                            escrowId={escrowId}
+                                            escrowStatus={escrowStatus}
+                                            sellerAddress={sellerAddress}
+                                            amount={amountVal}
+                                            expiresAt={order.expiresAt as string | undefined}
+                                            onStatusChange={fetchOrder}
+                                        />
+                                    </div>
+
+                                    {/* Bloque de Advertencia y Seguridad */}
+                                    <div className="w-full bg-[#191A1E] rounded-xl p-5 flex flex-col gap-1 shrink-0">
+                                        <div className="flex items-center gap-2">
+                                            <AlertTriangle className="w-5 h-5 text-[#ff8800]" />
+                                            <span className="text-white font-bold text-[15px] font-space uppercase tracking-wide">
+                                                Do not release crypto before verifying funds
+                                            </span>
+                                        </div>
+                                        <p className="text-[#C2C7D0] text-[14px] font-space">
+                                            Ensure the buyer's name on the bank transfer matches their verified profile name (
+                                            <span className="font-bold text-white">{order.buyer?.alias || "Buyer"}</span>
+                                            ). Third-party payments are against our terms of service.
+                                        </p>
+                                    </div>
+
+                                    {/* Barra Inferior Adicional de Acciones de Soporte */}
+                                    
+                                    <div className="w-full flex flex-row items-center justify-end pt-2 shrink-0">
+                                        <button className="text-[#FF6B6B] hover:text-red-400 font-bold font-space uppercase text-[14px] tracking-[0.5px] transition-colors cursor-pointer">
+                                            Report Issue
+                                        </button>
+                                    </div>
+                                    
+                                </div>
+                            )}
                         </div>
                     </div>
 
-                    {/* RIGHT COLUMN: Section - Right Column: Chat Interface (460px width) */}
+                    {/* COLUMNA DERECHA: Componente de Chat global */}
                     <div className="w-[460px] h-full bg-[#1B1B21] flex flex-col shrink-0 min-h-0">
                         <Chat 
                             orderId={order.orderId} 
                             chatName={counterpartyUser?.alias || (isBuyer ? "Seller" : "Buyer")} 
                         />
                     </div>
-
                 </main>
             </div>
         </div>
