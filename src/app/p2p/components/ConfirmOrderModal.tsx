@@ -9,6 +9,7 @@ import { useEscrows } from "@/features/escrow/hooks/useEscrows";
 import { walletService } from "@/features/wallet/application/wallet.service";
 import { useWalletBalance } from "@/features/wallet/presentation/hooks/useWalletBalance";
 import { useRouter } from "next/navigation";
+import { useNotification } from "../../components/NotificationContext";
 
 interface ConfirmOrderModalProps {
     offer: Offer;
@@ -21,6 +22,7 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
     const { createOrder } = useOrders();
     const { syncEscrow } = useEscrows();
     const router = useRouter();
+    const { notify } = useNotification();
 
     const [amountToPay, setAmountToPay] = useState("");
     const [selectedPaymentId, setSelectedPaymentId] = useState("");
@@ -149,15 +151,15 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
 
     const handleInitiateOrder = async () => {
         if (!currentUser) {
-            alert("Please login first.");
+            notify("error", "Please login first.");
             return;
         }
         if (errorMsg || !amountToPay || parseFloat(amountToPay) <= 0) {
-            alert("Please correct amount errors before initiating.");
+            notify("warning", "Please correct amount errors before initiating.");
             return;
         }
         if (intersectingMethods.length === 0) {
-            alert("No matching payment methods between you and the offer creator.");
+            notify("error", "No matching payment methods between you and the offer creator.");
             return;
         }
 
@@ -185,7 +187,7 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
             });
 
             if (!orderData?.orderId) {
-                alert("Order created but missing orderId. Check transactions.");
+                notify("error", "Order created but missing orderId. Check transactions.");
                 onClose();
                 return;
             }
@@ -196,8 +198,8 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
             // If current user is the seller -> prompt wallet signing and sync
             if (!isBuyOperation) {
                 if (!unsignedXdr) {
-                    alert("Order and escrow created. Merchant must fund the escrow from dashboard.");
-                    router.push("/trade/" + orderData.orderId.replace(/-/g, ""));
+                    notify("warning", "Order and escrow created. Merchant must fund the escrow from dashboard.");
+                    router.push("/p2p/orders/" + orderData.orderId.replace(/-/g, ""));
                     return;
                 }
 
@@ -205,25 +207,25 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
                 try {
                     const signedXdr = await walletService.signTransaction(unsignedXdr);
                     await syncEscrow({ escrowId: escrowId, action: "fund", signedXdr });
-                    alert("Escrow funded successfully. Redirecting to trade view.");
-                    router.push("/trade/" + orderData.orderId.replace(/-/g, ""));
+                    notify("success", "Escrow funded successfully. Redirecting to trade view.");
+                    router.push("/p2p/orders/" + orderData.orderId.replace(/-/g, ""));
                     return;
                 } catch (signErr) {
                     console.error("Signing or sync failed:", signErr);
-                    alert("Failed to sign or sync the escrow transaction. Merchant should fund the escrow from trade page.");
-                    router.push("/trade/" + orderData.orderId.replace(/-/g, ""));
+                    notify("error", "Failed to sign or sync the escrow transaction. Merchant should fund the escrow from trade page.");
+                    router.push("/p2p/orders/" + orderData.orderId.replace(/-/g, ""));
                     return;
                 }
             }
 
             // If current user is the buyer -> notify and redirect
-            alert("Order initiated and escrow contract created. The seller has been notified to fund the escrow.");
-            router.push("/trade/" + orderData.orderId.replace(/-/g, ""));
+            notify("success", "Order initiated and escrow contract created. The seller has been notified to fund the escrow.");
+            router.push("/p2p/orders/" + orderData.orderId.replace(/-/g, ""));
 
         } catch (err: any) {
             console.error(err);
             const msg = err?.message || "Error initiating order. Please try again.";
-            alert(msg);
+            notify("error", msg);
         } finally {
             setIsSubmitting(false);
         }

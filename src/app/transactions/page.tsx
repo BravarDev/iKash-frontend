@@ -33,7 +33,7 @@ export default function TransactionsPage() {
                 {orders.map(o => (
                     <div 
                         key={o.orderId} 
-                        onClick={() => router.push("/trade/" + o.orderId.replace(/-/g, ""))}
+                        onClick={() => router.push("/p2p/orders/" + o.orderId.replace(/-/g, ""))}
                         className="bg-[#0E0E13] border border-[#2A2A2A] rounded-lg p-4 cursor-pointer hover:border-[#DAFF00] hover:bg-[#15151b] transition-all"
                     >
                         <div className="flex items-center justify-between">

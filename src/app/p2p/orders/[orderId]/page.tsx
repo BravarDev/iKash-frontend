@@ -1,16 +1,17 @@
 "use client";
 
-import { use, useEffect, useState, useCallback } from "react";
+import { use, useEffect, useState, useCallback, useMemo } from "react";
 import { Aside } from "@/app/components/Aside";
 import { Header } from "@/app/components/Header";
 import { TradeDetails } from "../components/TradeDetails";
 import { TradeEvidenceUploader } from "../components/TradeEvidenceUploader";
 import { EvidencePreview } from "../components/EvidencePreview";
-import { Chat } from "../../p2p/components/Chat";
+import { Chat } from "../../components/Chat";
 import { useUser } from "@/features/user/presentation/context/UserContext";
 import { useOrders } from "@/features/order/hooks/useOrders";
 import { Order } from "@/features/order/models/order";
 import { ArrowLeft, AlertTriangle, Ban, Loader2 } from "lucide-react";
+import Link from "next/link";
 
 interface PageProps {
     params: Promise<{ orderId: string }>;
@@ -26,11 +27,80 @@ export default function TradePage({ params }: PageProps) {
     const { currentUser } = useUser();
     const { getOrder } = useOrders();
 
-    const [order, setOrder] = useState<Order | null>(null);
+    const [order, setOrder] = useState<any | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMsg, setErrorMsg] = useState("");
 
+    // Create a demo order object when path is /demo or starting with mock-
+    const demoOrder = useMemo(() => {
+        if (!currentUser) return null;
+        return {
+            orderId: "mock-uuid-1",
+            buyerId: currentUser.userId,
+            sellerId: "seller-123",
+            assetAmount: "0.05",
+            fiatAmount: "3250.00",
+            orderStatus: "pending",
+            createdAt: "2026-10-24T12:00:00.000Z",
+            expiresAt: "2026-10-24T13:00:00.000Z",
+            buyer: {
+                userId: currentUser.userId,
+                alias: currentUser.alias || "Buyer",
+                publicKey: currentUser.publicKey || "G_BUYER_KEY_MOCK...",
+                kycStatus: currentUser.kycStatus || "approved",
+            },
+            seller: {
+                userId: "seller-123",
+                alias: "CryptoKing_99",
+                publicKey: "G_SELLER_KEY_MOCK...",
+                kycStatus: "approved",
+            },
+            offer: {
+                offerId: "offer-1",
+                price: "65000",
+                assetCode: "USDC",
+                type: "sell",
+                minAmount: "10",
+                maxAmount: "10000",
+                payment_methods: [
+                    {
+                        payment_id: "pm-1",
+                        bankName: "Bank Transfer SEPA",
+                        account_identifier: "ES12 3456 7890 1234 5678",
+                        beneficiary_name: "QuantVortex_LP",
+                        payment_provider: {
+                            name: "Bank Transfer SEPA",
+                            type: "bank",
+                        }
+                    }
+                ],
+                paymentMethods: [
+                    {
+                        paymentId: "pm-1",
+                        bankName: "Bank Transfer SEPA",
+                        accountDetails: "ES12 3456 7890 1234 5678",
+                        beneficiaryName: "QuantVortex_LP",
+                        type: "bank"
+                    }
+                ]
+            },
+            escrow: {
+                escrowId: "escrow-mock-1",
+                escrowStatus: "pending",
+                buyerAddress: currentUser.publicKey || "G_BUYER_KEY_MOCK...",
+                sellerAddress: "G_SELLER_KEY_MOCK...",
+                amount: "0.05",
+            }
+        };
+    }, [currentUser]);
+
     const fetchOrder = useCallback(async () => {
+        if (orderId === "demo" || orderId.startsWith("mock-")) {
+            setOrder(demoOrder);
+            setIsLoading(false);
+            return;
+        }
+
         try {
             const dashedId = restoreUuidDashes(orderId);
             const data = await getOrder(dashedId);
@@ -45,7 +115,7 @@ export default function TradePage({ params }: PageProps) {
         } finally {
             setIsLoading(false);
         }
-    }, [orderId, getOrder]);
+    }, [orderId, getOrder, demoOrder]);
 
     useEffect(() => {
         if (currentUser) {
@@ -167,12 +237,12 @@ export default function TradePage({ params }: PageProps) {
                         
                         {/* Subheader superior de navegación */}
                         <div className="h-[64px] border-b border-[rgba(69,73,50,0.1)] bg-[rgba(19,19,24,0.6)] backdrop-blur-md px-[60px] flex items-center justify-between shrink-0">
-                            <button 
-                                onClick={() => window.history.back()}
+                            <Link 
+                                href="/p2p/orders"
                                 className="text-[#9CA3AF] hover:text-white flex items-center gap-2 text-[14px] font-bold uppercase tracking-[-0.35px] transition-colors cursor-pointer font-space"
                             >
                                 <ArrowLeft className="w-4 h-4 text-[#9CA3AF] stroke-[3px]" /> BACK TO ORDERS
-                            </button>
+                            </Link>
                             <div className="flex items-center gap-3 select-none">
                                 {!isCompleted && (
                                     <>
@@ -192,16 +262,13 @@ export default function TradePage({ params }: PageProps) {
                         <div className="grow flex flex-col p-[32px_64px_40px_64px] overflow-auto justify-between items-center min-h-0 w-full">
                             
                             {isBuyer ? (
-                                /* ========================================================= */
-                                /* FLUJO DE COMPRADOR (Layout Proporcional 60/40)            */
-                                /* ========================================================= */
                                 <div className="flex flex-col items-center justify-center h-full w-full">
                                     <div className="flex flex-row items-start gap-[24px] shrink-0 min-h-0 w-[1043px] h-[571.5px]">
                                         <div className="w-[616.2px] h-full shrink-0">
                                             <TradeDetails 
                                                 role={role}
                                                 amount={amountVal}
-                                                assetCode={order.offer?.assetCode || "XLM"}
+                                                assetCode={order.offer?.assetCode || "USDC"}
                                                 unitPrice={priceVal}
                                                 total={totalVal}
                                                 paymentMethod={paymentMethodLabel}
@@ -226,12 +293,8 @@ export default function TradePage({ params }: PageProps) {
                                     </div>
                                 </div>
                             ) : (
-                                /* ========================================================= */
-                                /* FLUJO DE VENDEDOR (Layout Simétrico 50/50 con Banner)      */
-                                /* ========================================================= */
                                 <div className="flex flex-col gap-6 w-full h-full items-center justify-center">
                                     
-                                    {/* Banner superior del Vendedor: Estado y Contador */}
                                     {!isCompleted && (
                                         <div className="w-full bg-[rgba(26,27,33,0.7)] border border-[rgba(218,255,0,0.15)] rounded-[12px] p-[18px_28px] flex items-center justify-between shrink-0">
                                             <div className="flex flex-col gap-1">
@@ -256,12 +319,11 @@ export default function TradePage({ params }: PageProps) {
                                         </div>
                                     )}
 
-                                    {/* Columnas Simétricas (50 / 50) */}
                                     <div className="grid grid-cols-2 gap-6 w-full">
                                         <TradeDetails 
                                             role={role}
                                             amount={amountVal}
-                                            assetCode={order.offer?.assetCode || "XLM"}
+                                            assetCode={order.offer?.assetCode || "USDC"}
                                             unitPrice={priceVal}
                                             total={totalVal}
                                             paymentMethod={paymentMethodLabel}
@@ -283,7 +345,6 @@ export default function TradePage({ params }: PageProps) {
                                         />
                                     </div>
 
-                                    {/* Bloque de Advertencia y Seguridad */}
                                     <div className="w-full bg-[#191A1E] rounded-xl p-5 flex flex-col gap-1 shrink-0">
                                         <div className="flex items-center gap-2">
                                             <AlertTriangle className="w-5 h-5 text-[#ff8800]" />
@@ -297,8 +358,6 @@ export default function TradePage({ params }: PageProps) {
                                             ). Third-party payments are against our terms of service.
                                         </p>
                                     </div>
-
-                                    {/* Barra Inferior Adicional de Acciones de Soporte */}
                                     
                                     <div className="w-full flex flex-row items-center justify-end pt-2 shrink-0">
                                         <button className="text-[#FF6B6B] hover:text-red-400 font-bold font-space uppercase text-[14px] tracking-[0.5px] transition-colors cursor-pointer">

@@ -54,7 +54,7 @@ export function TradeDashboard() {
     }, [offers]);
 
     return (
-        <div className="w-full max-w-[1136px] min-h-[calc(100vh-100px)] flex flex-col pt-12 pr-8 pb-12 border-r border-[#1F2937]">
+        <div className="w-full flex flex-col pt-8 pb-12 ">
             <KycBanner />
 
             <div className="w-full mb-8">
