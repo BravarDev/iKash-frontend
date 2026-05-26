@@ -33,7 +33,7 @@ export function Navbar() {
 	}, []);
 
 	return (
-		<nav className="w-480 bg-[#010308CC] border-b border-[#FFFFFF1A]">
+		<nav className="w-full bg-[#010308CC] border-b border-[#FFFFFF1A] backdrop-blur-md sticky top-0 z-50 px-4 md:px-8">
 			<div className="max-w-7xl mx-auto flex items-center justify-between h-16">
 				<div className="flex flex-row">
 					<Image
