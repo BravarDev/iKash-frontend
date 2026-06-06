@@ -1,5 +1,21 @@
+import { Offer } from "../../offer/models/offer";
+import { Users } from "../../user/models/users";
+
+export interface EscrowOnChain {
+    escrowId: string;
+    orderId: string;
+    contractId?: string | null;
+    escrowStatus: "pending" | "initialized" | "funded" | "fiat_sent" | "released";
+    amount?: number | string | null;
+    buyerAddress?: string | null;
+    sellerAddress?: string | null;
+    txHashLock?: string | null;
+    txHashRelease?: string | null;
+}
+
 export interface Order {
-    oderId: string;
+    orderId: string;
+    oderId?: string;
     offerId: string;
     buyerId: string;
     sellerId: string;
@@ -7,4 +23,8 @@ export interface Order {
     fiatAmount: string;
     orderStatus: string;
     expiresAt: string | null;
+    offer?: Offer;
+    escrow?: EscrowOnChain | null;
+    buyer?: Users;
+    seller?: Users;
 }

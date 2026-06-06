@@ -5,4 +5,5 @@ export interface CreateOffer {
     price: string;
     minAmount: string;
     maxAmount: string;
+    paymentMethodIds?: string[];
 }

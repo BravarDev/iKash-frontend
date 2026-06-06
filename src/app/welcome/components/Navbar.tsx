@@ -17,7 +17,7 @@ const walletOptions = [
 	{ label: "Freighter", icon: "🔵", description: "Browser extension", connection: "freighter" }
 ];
 
-export function Navbar() {
+export function Navbar({ onConnectClick }: { onConnectClick?: () => void }) {
 	const [active, setActive] = useState("Home");
 	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
@@ -33,7 +33,7 @@ export function Navbar() {
 	}, []);
 
 	return (
-		<nav className="w-480 bg-[#010308CC] border-b border-[#FFFFFF1A]">
+		<nav className="w-full bg-[#010308CC] border-b border-[#FFFFFF1A] backdrop-blur-md sticky top-0 z-50 px-4 md:px-8">
 			<div className="max-w-7xl mx-auto flex items-center justify-between h-16">
 				<div className="flex flex-row">
 					<Image
@@ -68,7 +68,7 @@ export function Navbar() {
 				</ul>
 				<div className="hidden md:block relative" ref={dropdownRef}>
 					<button
-						onClick={() => setDropdownOpen(!dropdownOpen)}
+						onClick={onConnectClick || (() => setDropdownOpen(!dropdownOpen))}
 						className="flex items-center gap-1 justify-center bg-[#BCED09] hover:bg-[#9bc505] active:scale-95 text-[#010308] 
                         text-sm font-bold w-[150.02px] h-10 rounded-full transition-all duration-150 cursor-pointer"
 					>

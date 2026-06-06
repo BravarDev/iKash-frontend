@@ -2,29 +2,62 @@
 
 import { useEffect, useState } from "react";
 import { CreateOfferModal } from "./CreateOfferModal";
+import { ConfirmOrderModal } from "./ConfirmOrderModal";
 import { useOffers } from "@/features/offer/hooks/useOffers";
 import { useUsers } from "@/features/user/hooks/useUsers";
+import { useUser } from "@/features/user/presentation/context/UserContext";
+import { KycBanner } from "@/app/components/KycBanner";
+import { useWalletBalance } from "@/features/wallet/presentation/hooks/useWalletBalance";
+import { Offer } from "@/features/offer/models/offer";
+
+function MerchantBalance({ publicKey, assetCode }: { publicKey?: string; assetCode?: string }) {
+    const { balance, balances, isLoading } = useWalletBalance(publicKey || null);
+
+    if (isLoading) return <span className="animate-pulse">...</span>;
+    if (!publicKey) return <span>0.00</span>;
+
+    const normalizedAssetCode = assetCode === "XLM" || assetCode === "native" ? "native" : assetCode;
+
+    if (normalizedAssetCode === "native") {
+        return <span>{balance || "0.00"}</span>;
+    }
+
+    const asset = balances.find(b => b.asset_code === normalizedAssetCode);
+    if (!asset) return <span>0.00</span>;
+
+    return <span>{parseFloat(asset.balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>;
+}
 
 export function TradeDashboard() {
     const [tab, setTab] = useState("Buy");
     const [amount, setAmount] = useState("");
     const [isOpen, setIsOpen] = useState(false);
-    const { offers } = useOffers();
-    const { getUser, userFound } = useUsers();
-
+    const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
     
+    // If user wants to "Buy", they need to see offers where the merchant is "selling".
+    // If user wants to "Sell", they need to see offers where the merchant is "buying".
+    const { offers } = useOffers({ type: tab === "Buy" ? "sell" : "buy" });
+    // Filter out offers that have been executed/archived server-side
+    const visibleOffers = offers.filter(o => !o.executed);
+    
+    const { getUser, userFound } = useUsers();
+    const { currentUser } = useUser();
+
+    const isVerified = currentUser?.kycStatus === "approved";
 
     useEffect(() => {
         offers.forEach((offer) => {
             if (offer?.creatorId) {
                 getUser(offer.creatorId);
             }
-        })
+        });
     }, [offers]);
 
     return (
-        <div className="w-308 h-246 border-r border-[#1F2937] pt-12">
-            <div className="w-284 h-43.25">
+        <div className="w-full flex flex-col pt-8 pb-12 ">
+            <KycBanner />
+
+            <div className="w-full mb-8">
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex bg-[#1a1a1a] rounded-lg p-1">
                         {["Buy", "Sell"].map((t) => (
@@ -42,8 +75,20 @@ export function TradeDashboard() {
                         ))}
                     </div>
 
-                    <button onClick={() => setIsOpen(true)}
-                        className="flex items-center gap-2 bg-[#BCED09] text-black text-sm font-bold px-4 py-2 rounded-2xl transition-all duration-200">
+                    <button 
+                        onClick={() => {
+                            if (!isVerified) {
+                                alert("KYC verification required to create offers.");
+                                return;
+                            }
+                            setIsOpen(true);
+                        }}
+                        disabled={!isVerified}
+                        title={!isVerified ? "KYC verification required" : ""}
+                        className={`flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-2xl transition-all duration-200 ${
+                            isVerified ? "bg-[#BCED09] text-black hover:bg-[#d4f53a]" : "bg-gray-700 text-gray-400 cursor-not-allowed"
+                        }`}
+                    >
                         <span className="text-sm leading-none">+</span>
                         Create Offer
                     </button>
@@ -87,7 +132,7 @@ export function TradeDashboard() {
                     </div>
                 </div>
             </div>
-            <div className="w-284 h-43.25">
+            <div className="w-full flex flex-col">
                 <div className="grid grid-cols-4 px-4 pb-3 text-[10px] tracking-[1px] text-[#8F8389] uppercase font-bold">
                     <div className="flex items-center p-3">
                         <span>Merchant</span>
@@ -104,13 +149,13 @@ export function TradeDashboard() {
                 </div>
 
                 <div className="space-y-2">
-                    {offers.map((offer) => (
+                    {visibleOffers.map((offer) => (
                         <div
                             key={offer.offerId}
                             className="grid grid-cols-4 items-center bg-[#161618] border border-[#1F2937] rounded-3xl px-4 py-5 hover:border-[#2a2a2a] hover:bg-[#181818] transition-all duration-200"
                         >
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-[#343434] flex items-center justify-center text-[#6b7280] text-[20px]" >
+                                <div className="w-10 h-10 rounded-full bg-[#343434] flex items-center justify-center text-[#6b7280] text-[20px]">
                                     👤
                                 </div>
                                 <div>
@@ -120,15 +165,28 @@ export function TradeDashboard() {
                             <div>
                                 <span className="text-white font-bold text-lg tabular-nums">{offer.price}</span>
                                 <span className="text-[#6b7280] text-xs ml-1">USD</span>
-                                <p className="text-[10px] text-[#4b5563] mt-0.5 tracking-wide">1 BTC MARKET PRICE</p>
+                                <p className="text-[10px] text-[#4b5563] mt-0.5 tracking-wide">1 {offer.assetCode || "BTC"} MARKET PRICE</p>
                             </div>
                             <div>
-                                <p className="text-sm text-white">Available: <span className="font-semibold">ver</span></p>
+                                <p className="text-sm text-white">Available: <span className="font-semibold"><MerchantBalance publicKey={userFound[offer.creatorId]?.publicKey} assetCode={offer.assetCode} /></span></p>
                                 <p className="text-[11px] text-[#6b7280] mt-0.5">Limit: {offer.minAmount} - {offer.maxAmount}</p>
                             </div>
                             <div className="flex">
-                                <button className="bg-[#bced09] hover:bg-[#d4f53a] text-black text-sm font-bold px-6 py-2.5 rounded-lg transition-all duration-200 hover:scale-105 active:scale-95">
-                                    Buy BTC
+                                <button 
+                                    disabled={!isVerified}
+                                    onClick={() => {
+                                        if (!isVerified) {
+                                            alert("KYC verification required to trade.");
+                                            return;
+                                        }
+                                        setSelectedOffer(offer);
+                                    }}
+                                    title={!isVerified ? "KYC verification required" : ""}
+                                    className={`text-sm font-bold px-6 py-2.5 rounded-lg transition-all duration-200 ${
+                                        isVerified ? "bg-[#bced09] hover:bg-[#d4f53a] text-black hover:scale-105 active:scale-95" : "bg-gray-700 text-gray-400 cursor-not-allowed"
+                                    }`}
+                                >
+                                    {tab === "Buy" ? "BUY" : "SELL"}
                                 </button>
                             </div>
                         </div>
@@ -138,6 +196,14 @@ export function TradeDashboard() {
 
             {isOpen && (
                 <CreateOfferModal onClose={() => setIsOpen(false)} />
+            )}
+
+            {selectedOffer && userFound[selectedOffer.creatorId] && (
+                <ConfirmOrderModal
+                    offer={selectedOffer}
+                    creator={userFound[selectedOffer.creatorId]}
+                    onClose={() => setSelectedOffer(null)}
+                />
             )}
         </div>
     );

@@ -2,32 +2,43 @@
 
 import Image from 'next/image'
 
-import paymentMethods from "../utils/paymentMethods";
 import arrow from '../../../../public/down-arrow.svg'
 import { FormEvent, useEffect, useState } from 'react';
-import cryptoAssets from '../utils/cryptoAssets';
+import usdcIcon from '../../../../public/usdc.png';
 import { CloseModalProps } from '@/app/utils/closeModalProps';
 import { useOffers } from '@/features/offer/hooks/useOffers';
+import { useUser } from '@/features/user/presentation/context/UserContext';
 import { useRouter } from 'next/navigation';
+import { useWallet, useWalletBalance } from '@/features/wallet';
 
 export function CreateOfferModal({ onClose }: CloseModalProps) {
-    const [isCryptoAssetOpen, setIsCryptoAssetOpen] = useState(false);
-    const [cryptoAsset, setCryptoAsset] = useState(cryptoAssets[0]);
+    const { currentUser } = useUser();
+    const { publicKey } = useWallet();
+    const { balances } = useWalletBalance(publicKey);
+
+    // USDC asset only
+    const usdcAsset = { label: 'USD Coin', value: 'USDC', icon: usdcIcon };
     const [tab, setTab] = useState("Buy");
     const [form, setForm] = useState({
-        creatorId: '55981f90-9569-4f2c-b24b-43d1ba6960bf',
-        type: '',
-        assetCode: '',
         price: '',
         minAmount: '',
         maxAmount: '',
     });
+
+    // Obtener balance de USDC del usuario
+    const usdcAssetBalance = balances?.find(
+        (b: any) => b.asset_code === 'USDC' || b.assetCode === 'USDC'
+    );
+    const usdcBalance = usdcAssetBalance
+        ? parseFloat(usdcAssetBalance.balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        : '0.00';
     const { createOffer } = useOffers();
 
     const nav = useRouter();
 
-    const [checked, setChecked] = useState<number[]>([]);
-    const toggle = (id: number) => {
+    const [checked, setChecked] = useState<string[]>([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const toggle = (id: string) => {
         setChecked(prev =>
             prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
         );
@@ -39,26 +50,57 @@ export function CreateOfferModal({ onClose }: CloseModalProps) {
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        const newOffer = await createOffer({
-            ...form,
-            type: tab.toLowerCase(),
-            assetCode: cryptoAsset.value,
-        });
-        if (newOffer) {
-            //onClose();
-            window.location.reload();
+        if (isSubmitting) return;
+
+        if (!currentUser || currentUser.kycStatus !== "approved") {
+            alert("KYC verification required to publish offers.");
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const newOffer = await createOffer({
+                ...form,
+                creatorId: currentUser.userId,
+                type: tab.toLowerCase(),
+                assetCode: usdcAsset.value,
+                paymentMethodIds: checked.map(String),
+            });
+            if (newOffer) {
+                window.location.reload();
+            } else {
+                setIsSubmitting(false);
+            }
+        } catch (err: any) {
+            alert(`Failed to create offer: ${err.message || err}`);
+            setIsSubmitting(false);
         }
     }
 
     return (
         <div
             className="fixed inset-0 bg-[black/60] backdrop-blur-sm z-40 flex items-center justify-end"
-            onClick={() => onClose()}
+            onClick={() => { if (!isSubmitting) onClose(); }}
         >
             <div
-                className="bg-[#0D1117F2] h-full w-md p-8 border-r border-white/10"
+                className="bg-[#0D1117F2] h-full w-md p-8 border-r border-white/10 relative overflow-hidden flex flex-col"
                 onClick={(e) => e.stopPropagation()}
             >
+                {/* Premium Loading Overlay */}
+                {isSubmitting && (
+                    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#0D1117]/80 backdrop-blur-md">
+                        <div className="relative flex items-center justify-center w-24 h-24 mb-6">
+                            <div className="absolute w-full h-full border-4 border-[#BCED09]/10 rounded-full"></div>
+                            <div className="absolute w-full h-full border-4 border-[#BCED09] rounded-full border-t-transparent animate-spin drop-shadow-[0_0_15px_rgba(188,237,9,0.5)]"></div>
+                            <div className="absolute w-16 h-16 border-4 border-[#BCED09]/20 rounded-full border-b-transparent animate-[spin_1.5s_linear_infinite_reverse]"></div>
+                        </div>
+                        <h3 className="text-[#BCED09] font-semibold text-xl tracking-wide animate-pulse mb-2">Creating Offer...</h3>
+                        <p className="text-gray-400 text-sm text-center max-w-[280px] px-4 leading-relaxed">
+                            Please wait while we process your request and secure your offer details in the blockchain.
+                        </p>
+                    </div>
+                )}
+
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-white text-lg font-semibold">Create New Offer</h2>
                     <button
@@ -96,37 +138,18 @@ export function CreateOfferModal({ onClose }: CloseModalProps) {
                                 </div>
                             </div>
                         </div>
-                        <div>
-                            <p className="text-[#CBD5E1]">Select Crypto Asset</p>
-                            <div className="relative mt-3">
-
-                                <div
-                                    className="relative bg-[#0D1117] border border-[#1C2128] rounded-xl px-5 py-4 cursor-pointer"
-                                    onClick={() => setIsCryptoAssetOpen(!isCryptoAssetOpen)}
-                                >
-                                    <span className="text-[#F1F5F9] text-[16px]">{cryptoAsset.label}</span>
-                                    <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
-                                        <Image src={arrow} width={24} height={24} alt="flecha del select" />
-                                    </div>
+                        <div className="mt-3">
+                            <p className="text-[#CBD5E1]">Crypto Asset</p>
+                            <div className="flex items-center gap-4 bg-[#0D1117] border border-[#1C2128] rounded-xl px-5 py-4 select-none">
+                                <Image src={usdcAsset.icon} width={32} height={32} alt="USDC icon" />
+                                <div className="flex flex-col">
+                                    <span className="text-[#F1F5F9] text-[16px] font-bold">{usdcAsset.label} (USDC)</span>
+                                    <span className="text-[#94A3B8] text-xs">Available: <span className="text-[#BCED09] font-bold">{usdcBalance}</span> USDC</span>
                                 </div>
-                                {isCryptoAssetOpen && (
-                                    <div className="absolute z-10 w-full mt-1 bg-[#1a1d27] rounded-xl overflow-hidden border border-white/10">
-                                        {cryptoAssets.map((c) => (
-                                            <div
-                                                key={c.value}
-                                                onClick={() => {
-                                                    setCryptoAsset(c);
-                                                    setIsCryptoAssetOpen(false);
-                                                }}
-                                                className={`px-5 py-3 text-[16px] cursor-pointer hover:bg-white/10 transition-colors
-                                            ${cryptoAsset === c ? 'text-[#BCED09]' : 'text-[#F1F5F9]'}`}
-                                            >
-                                                {c.label}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
                             </div>
+                            <p className="text-[#64748B] text-[11px] mt-2 leading-relaxed">
+                                Currently our system only supports fund locking of USDC. Please swap your assets if required.
+                            </p>
                         </div>
                         <div className='mt-3'>
                             <p className="text-[#CBD5E1]">Price per Unit</p>
@@ -138,6 +161,7 @@ export function CreateOfferModal({ onClose }: CloseModalProps) {
                                     onChange={handleChange}
                                     placeholder="0.00"
                                     min={0}
+                                    step="0.0001"
                                     onKeyDown={(e) => ["-", "e", "E"].includes(e.key) && e.preventDefault()}
                                     className="bg-[#0D1117] w-full border border-[#1C2128] rounded-xl px-5 
                                         py-4 text-[#F1F5F9] placeholder:text-[#64748B] focus:outline-none 
@@ -195,36 +219,88 @@ export function CreateOfferModal({ onClose }: CloseModalProps) {
                         <div className='mt-3'>
                             <p className="text-[#CBD5E1]">Payment Methods</p>
                             <div className="flex flex-col gap-4">
-                                {paymentMethods.map((option) => (
-                                    <div
-                                        key={option.id}
-                                        className={`flex w-99.75 h-17.5 border rounded-xl items-center gap-3 cursor-pointer
-                                                ${checked.includes(option.id) ? 'border-[#DAFF0066]' : 'border-[#1C2128]'}`}
-                                        onClick={() => toggle(option.id)}
-                                    >
-                                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors m-3
-                                                ${checked.includes(option.id) ? 'bg-[#DAFF00] border-[#DAFF00]' : 'bg-transparent border-gray-600'}`}
+                                {/* Legacy payment methods */}
+                                {currentUser?.paymentMethods?.map((pm) => {
+                                    const id = pm.paymentId || pm.payment_id || pm.id;
+                                    const name = pm.payment_provider?.name || pm.paymentProvider?.name || pm.bankName || pm.type || "Payment Method";
+                                    const identifier = pm.accountIdentifier || pm.account_identifier || pm.accountDetails || "";
+                                    const owner = pm.beneficiaryName || pm.beneficiary_name || "";
+                                    
+                                    return (
+                                        <div
+                                            key={id}
+                                            className={`flex w-99.75 h-17.5 border rounded-xl items-center gap-3 cursor-pointer
+                                                    ${checked.includes(id) ? 'border-[#DAFF0066]' : 'border-[#1C2128]'}`}
+                                            onClick={() => toggle(id as any)}
                                         >
-                                            {checked.includes(option.id) && (
-                                                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="black" strokeWidth={3}>
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            )}
+                                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors m-3
+                                                    ${checked.includes(id) ? 'bg-[#DAFF00] border-[#DAFF00]' : 'bg-transparent border-gray-600'}`}
+                                            >
+                                                {checked.includes(id) && (
+                                                    <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="black" strokeWidth={3}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                )}
+                                            </div>
+                                            <div className='flex flex-col'>
+                                                <span className="text-[#F1F5F9] text-sm select-none">{name}</span>
+                                                <span className="text-[#94A3B8] text-xs select-none">
+                                                    {identifier}{owner ? ` - ${owner}` : ''}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div className='flex flex-col'>
-                                            <span className="text-[#F1F5F9] text-sm select-none">{option.label}</span>
-                                            <span className="text-[#F1F5F9] text-sm select-none">{option.info}</span>
+                                    );
+                                })}
+
+                                {/* New payment_method (v2) */}
+                                {currentUser?.payment_method?.map((pm) => {
+                                    const id = pm.payment_id || pm.paymentId || pm.id;
+                                    const name = pm.payment_provider?.name || pm.paymentProvider?.name || pm.type || "Payment Method";
+                                    const identifier = pm.account_identifier || pm.accountIdentifier || pm.accountDetails || "";
+                                    const owner = pm.beneficiary_name || pm.beneficiaryName || "";
+                                    
+                                    return (
+                                        <div
+                                            key={id}
+                                            className={`flex w-99.75 h-17.5 border rounded-xl items-center gap-3 cursor-pointer
+                                                    ${checked.includes(id) ? 'border-[#DAFF0066]' : 'border-[#1C2128]'}`}
+                                            onClick={() => toggle(id as any)}
+                                        >
+                                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors m-3
+                                                    ${checked.includes(id) ? 'bg-[#DAFF00] border-[#DAFF00]' : 'bg-transparent border-gray-600'}`}
+                                            >
+                                                {checked.includes(id) && (
+                                                    <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="black" strokeWidth={3}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                )}
+                                            </div>
+                                            <div className='flex flex-col'>
+                                                <span className="text-[#F1F5F9] text-sm select-none">{name}</span>
+                                                <span className="text-[#94A3B8] text-xs select-none">
+                                                    {identifier}{owner ? ` - ${owner}` : ''}
+                                                </span>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
+                                
+                                {(!currentUser?.paymentMethods?.length && !currentUser?.payment_method?.length) && (
+                                    <p className="text-[#94A3B8] text-sm italic">No payment methods found. Add one in settings.</p>
+                                )}
                             </div>
                         </div>
                         <div className="flex w-full items-center justify-center gap-3 mt-10">
                             <button
                                 type='submit'
-                                className="flex-1 bg-[#BCED09] text-black font-semibold px-4 py-3 rounded-xl hover:bg-[#9ac208] transition-colors"
+                                disabled={isSubmitting}
+                                className={`flex-1 font-semibold px-4 py-3 rounded-xl transition-all duration-300
+                                    ${isSubmitting 
+                                        ? 'bg-[#bced09]/50 text-black/50 cursor-not-allowed' 
+                                        : 'bg-[#BCED09] text-black hover:bg-[#9ac208] hover:shadow-[0_0_15px_rgba(188,237,9,0.3)]'
+                                    }`}
                             >
-                                Publish Offer
+                                {isSubmitting ? 'Processing...' : 'Publish Offer'}
                             </button>
                         </div>
                     </form>

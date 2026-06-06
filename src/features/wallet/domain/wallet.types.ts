@@ -11,6 +11,7 @@ export interface WalletState {
 export interface WalletActions {
     connect: (provider: WalletProvider) => Promise<void>;
     disconnect: () => void;
+    signTransaction: (xdr: string, network?: string) => Promise<string>;
 }
 
 export type WalletContext = WalletState & WalletActions;

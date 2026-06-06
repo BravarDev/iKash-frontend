@@ -1,69 +1,93 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Order } from "../models/order";
 import { CreateOrder } from "../models/createOrder";
 import { UpdateOrder } from "../models/updateOrder";
+import { useUser } from "../../user/presentation/context/UserContext";
 
 export function useOrders() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [order, setOrder] = useState<Order | null>(null);
+    const { accessToken, logout } = useUser();
 
-    useEffect(() => {
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`)
-            .then(res => {
-                if (!res.ok) throw new Error('Orders not found');
-                return res.json();
-            })
-            .then(data => {
-                setOrders(data);
-                console.log(data)
-            })
-            .catch(err => console.error(err));
-    }, []);
+    // Helper para manejar errores de autenticación
+    const handleResponse = async (res: Response, defaultError: string) => {
+        if (res.status === 401) {
+            logout();
+            throw new Error("Sesión expirada. Por favor, inicia sesión nuevamente.");
+        }
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            const msg = errData.message ? (Array.isArray(errData.message) ? errData.message.join(', ') : errData.message) : defaultError;
+            throw new Error(msg);
+        }
+        return res.json();
+    };
+
+    const fetchUserOrders = useCallback(async (userId: string) => {
+        try {
+            const headers: Record<string, string> = { "Content-type": "application/json" };
+            if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders?userId=${userId}`, { headers });
+            const data = await handleResponse(res, 'Orders not found');
+            setOrders(data);
+        } catch (err) {
+            console.error(err);
+        }
+    }, [accessToken]);
 
     const getOrder = async (orderId: string) => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/${orderId}`);
-            if (!res.ok) throw new Error('Creation order error');
-            const data = await res.json();
+            const headers: Record<string, string> = { "Content-type": "application/json" };
+            if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/${orderId}`, { headers });
+            const data = await handleResponse(res, 'Get order error');
             setOrder(data);
+            return data;
         } catch (error) {
             console.error(error);
+            throw error;
         }
-    }
+    };
 
     const createOrder = async (newOrder: CreateOrder) => {
         try {
+            const headers: Record<string, string> = { "Content-type": "application/json" };
+            if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`, {
                 method: "POST",
-                headers: {
-                    "Content-type": "application/json"
-                },
+                headers,
                 body: JSON.stringify(newOrder)
             });
-            if (!res.ok) throw new Error('Creation order error');
-            const data = await res.json();
+            const data = await handleResponse(res, 'Creation order error');
             setOrder(data);
+            return data;
         } catch (error) {
             console.error(error);
+            throw error;
         }
-    }
+    };
 
     const updateOrder = async (updateOrder: UpdateOrder, orderId: string) => {
         try {
+            const headers: Record<string, string> = { "Content-type": "application/json" };
+            if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/${orderId}`, {
                 method: "PATCH",
-                headers: {
-                    "Content-type": "application/json"
-                },
+                headers,
                 body: JSON.stringify(updateOrder)
             });
-            if (!res.ok) throw new Error('Update order error');
-            const data = await res.json();
+            const data = await handleResponse(res, 'Update order error');
             setOrder(data);
+            return data;
         } catch (error) {
-
+            console.error(error);
+            throw error;
         }
-    }
+    };
 
-    return { orders, order, createOrder, getOrder, updateOrder }
+    return { orders, order, createOrder, getOrder, updateOrder, fetchUserOrders };
 }

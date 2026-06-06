@@ -6,4 +6,9 @@ export interface SetupAccountPayload {
     bankName?: string;
     accountHolderName?: string;
     accountNumber?: string;
+    providerId?: string;
+    accountIdentifier?: string;
+    identificationNumber?: string;
+    beneficiaryName?: string;
+    description?: string;
 }
