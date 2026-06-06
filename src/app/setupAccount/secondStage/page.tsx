@@ -38,7 +38,7 @@ export default function SecondStage() {
                         <p className="text-[#F1F5F9] font-bold text-[20px]">2. Preferences</p>
                     </div>
 
-
+                    {/* Notificaciones
                     <div className="bg-[#0103084D] border border-[#343434] rounded-xl px-5 py-4 mb-4 flex items-center justify-between">
                         <div>
                             <p className="text-[#F1F5F9] text-[16px] font-semibold">Enable Notifications</p>
@@ -55,7 +55,8 @@ export default function SecondStage() {
                             />
                         </button>
                     </div>
-
+                    */}
+                    
                     <div className="relative">
                         <p className="text-[#CBD5E1] text-sm font-semibold mb-2 px-1">Display Currency</p>
                         <div

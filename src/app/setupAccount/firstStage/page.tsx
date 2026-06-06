@@ -39,6 +39,7 @@ export default function FirstStage() {
                             type="text"
                             placeholder="e.g. Satoshi_Master"
                             className="bg-[#01030880] text-[#6B7280] text-[16px] rounded-xl px-4 py-3 outline-none border border-[#343434] focus:border-gray-600"
+                            required
                         />
                     </div>
 
@@ -48,6 +49,7 @@ export default function FirstStage() {
                             type="email"
                             placeholder="name@ika$h.io"
                             className="bg-[#01030880] text-[#6B7280] text-[16px] rounded-xl px-4 py-3 outline-none border border-[#343434] focus:border-gray-600"
+                            required
                         />
                     </div>
                 </div>

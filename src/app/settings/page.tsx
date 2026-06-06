@@ -7,9 +7,6 @@ import { ProfileTab } from "./components/ProfileTab";
 
 const tabs = [
     { id: "profile", label: "Profile" },
-    { id: "wallets", label: "Wallets" },
-    { id: "payments", label: "Payments" },
-    { id: "security", label: "Security" },
 ];
 
 export default function SettingsPage() {

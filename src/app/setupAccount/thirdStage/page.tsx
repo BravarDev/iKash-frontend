@@ -81,6 +81,7 @@ export default function ThirdStage() {
                             type="text"
                             placeholder="Full Legal Name"
                             className="bg-[#01030880] text-[#6B7280] text-[16px] rounded-xl px-4 py-3 outline-none border border-[#343434] focus:border-gray-600"
+                            required
                         />
                     </div>
 
@@ -90,6 +91,7 @@ export default function ThirdStage() {
                             type="text"
                             placeholder="EX00 0000 0000..."
                             className="bg-[#01030880] text-[#6B7280] text-[16px] rounded-xl px-4 py-3 outline-none border border-[#343434] focus:border-gray-600"
+                            required
                         />
                     </div>
 
