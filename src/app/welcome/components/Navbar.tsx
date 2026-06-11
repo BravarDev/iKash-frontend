@@ -7,6 +7,7 @@ import { ConnectButton } from "@/features/wallet/presentation/components/Connect
 
 const navLinks = [
 	{ label: "Home", href: "/" },
+	{ label: "Info", href: "/info" },
 ];
 
 const walletOptions = [

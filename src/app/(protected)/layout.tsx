@@ -1,18 +1,36 @@
 "use client";
 
 import { useWallet } from "@/features/wallet";
-import { useRouter } from "next/navigation";
+import { useUser } from "@/features/user/presentation/context/UserContext";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  const { isConnected, isLoading } = useWallet();
+  const { isConnected, isLoading: walletLoading } = useWallet();
+  const { accessToken, currentUser, isLoading: userLoading } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
+
+  const isLoading = walletLoading || userLoading;
+  const isSetupRoute = pathname === "/setupAccount";
 
   useEffect(() => {
-    if (!isLoading && !isConnected) {
+    if (isLoading) return;
+
+    if (!isConnected) {
       router.replace("/welcome");
+      return;
     }
-  }, [isConnected, isLoading, router]);
+
+    if (!accessToken) {
+      router.replace("/welcome");
+      return;
+    }
+
+    if (currentUser?.pendingAccountInfo && !isSetupRoute) {
+      router.replace("/setupAccount");
+    }
+  }, [isConnected, isLoading, accessToken, currentUser, router, isSetupRoute]);
 
   if (isLoading) {
     return (
@@ -22,7 +40,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
     );
   }
 
-  if (!isConnected) return null;
+  if (!isConnected || !accessToken) return null;
 
   return <>{children}</>;
 }

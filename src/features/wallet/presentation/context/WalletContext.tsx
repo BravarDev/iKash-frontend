@@ -70,7 +70,35 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     const connect = useCallback(async (provider: WalletProvider) => {
         setState((s) => ({ ...s, isLoading: true, error: null }));
         try {
+            // 1. Validaciones previas de RED / Mainnet (Frontend Checks)
+            if (provider === "lobstr") {
+                throw new Error("LOBSTR is configured for Mainnet. Please join the waitlist instead.");
+            }
+            if (provider === "freighter") {
+                try {
+                    const { getNetwork } = await import("@stellar/freighter-api");
+                    const activeNet = await getNetwork();
+                    const activeNetStr = typeof activeNet === "string" ? activeNet : (activeNet as any)?.network || "TESTNET";
+                    if (activeNetStr.toUpperCase() !== "TESTNET") {
+                        throw new Error("Active network is Mainnet. Please switch your wallet configuration to TESTNET.");
+                    }
+                } catch (e: any) {
+                    // Ignore missing freighter errors here, handled by walletService
+                    if (e.message && e.message.includes("Mainnet")) {
+                        throw e;
+                    }
+                }
+            }
+
             const publicKey = await walletService.connect(provider);
+
+            // 2. Environment Check (Horizon Testnet Account existence)
+            const horizonRes = await fetch(`https://horizon-testnet.stellar.org/accounts/${publicKey}`);
+            if (!horizonRes.ok) {
+                walletService.clearSession();
+                throw new Error("Account not funded or active on Testnet. Please fund your account via Friendbot before connecting.");
+            }
+
             setState({ publicKey, provider, isConnected: true, isLoading: false, error: null });
             
             // Auth logic: Get temporary JWT
@@ -99,6 +127,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         } catch (err) {
             const msg = err instanceof Error ? err.message : "Error desconocido";
             setState((s) => ({ ...s, isLoading: false, error: msg }));
+            throw err; // Re-throw to be caught by the UI component
         }
     }, [getOrCreateByWallet, setCurrentUser, setAccessToken, router]);
 

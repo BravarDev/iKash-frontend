@@ -2,6 +2,8 @@ type HeaderProps = {
     description?: string;
     title: string;
     name?: string;
+    showSearch?: boolean;
+    showUser?: boolean;
 }
 
 export function Header({ description, title, name }: HeaderProps) {
