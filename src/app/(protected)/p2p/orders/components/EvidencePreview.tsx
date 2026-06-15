@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { useEscrows } from "@/features/escrow/hooks/useEscrows";
 import { useOrders } from "@/features/order/hooks/useOrders";
-import { walletService } from "@/features/wallet/application/wallet.service";
+import { walletService, isSignatureCancelled } from "@/features/wallet/application/wallet.service";
 import { Info, CircleCheck, Loader2, Eye } from "lucide-react";
+import { SignatureCancelledModal } from "../../components/SignatureCancelledModal";
 
 export interface EvidencePreviewProps {
     orderId: string;
@@ -31,6 +32,9 @@ export function EvidencePreview({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [timeLeft, setTimeLeft] = useState<string>("00:00");
     const [isExpired, setIsExpired] = useState(false);
+    const [pendingAction, setPendingAction] = useState<"fund" | "release" | null>(null);
+    const [pendingUnsignedXdr, setPendingUnsignedXdr] = useState<string | null>(null);
+    const [showSignatureModal, setShowSignatureModal] = useState(false);
     // Eliminado: unsignedXdr y copied
 
     useEffect(() => {
@@ -64,18 +68,25 @@ export function EvidencePreview({
         } 
         console.log("Initiating escrow funding process for escrowId:", escrowId);
         setIsSubmitting(true);
+        let fundXdr: string | null = null;
         try {
             const res = await fundEscrow({ escrowId, signerAddress: sellerAddress, amount });
-            const unsignedXdr = res.unsignedFundTransaction || res.unsignedTransaction;
-            if (!unsignedXdr) throw new Error("Funding failed: no unsigned XDR returned");
+            fundXdr = res.unsignedFundTransaction || res.unsignedTransaction;
+            if (!fundXdr) throw new Error("Funding failed: no unsigned XDR returned");
             // Firmar automáticamente usando el walletService interno
-            const signedXdr = await walletService.signTransaction(unsignedXdr);
+            const signedXdr = await walletService.signTransaction(fundXdr);
             await syncEscrow({ escrowId, action: "fund", signedXdr });
             await updateOrder({ orderStatus: "locked" }, orderId);
             alert("Escrow funded successfully on-chain!");
             onStatusChange();
         } catch (err: any) {
             console.error(err);
+            if (isSignatureCancelled(err) && fundXdr) {
+                setPendingAction("fund");
+                setPendingUnsignedXdr(fundXdr);
+                setShowSignatureModal(true);
+                return;
+            }
             alert(`Error: ${err.message || err}`);
         } finally {
             setIsSubmitting(false);
@@ -85,12 +96,13 @@ export function EvidencePreview({
     const handleReleaseAction = async () => {
         if (isSubmitting || !sellerAddress || !escrowId) return;
         setIsSubmitting(true);
+        let releaseXdr: string | null = null;
         try {
             const res = await releaseEscrow({ escrowId, releaseSigner: sellerAddress });
-            const unsignedXdr = res.unsignedFundTransaction || res.unsignedTransaction;
-            if (!unsignedXdr) throw new Error("Release failed: no unsigned XDR returned");
+            releaseXdr = res.unsignedFundTransaction || res.unsignedTransaction;
+            if (!releaseXdr) throw new Error("Release failed: no unsigned XDR returned");
             
-            const signedXdr = await walletService.signTransaction(unsignedXdr);
+            const signedXdr = await walletService.signTransaction(releaseXdr);
             await syncEscrow({ escrowId, action: "release", signedXdr });
             await updateOrder({ orderStatus: "released" }, orderId);
             
@@ -98,6 +110,12 @@ export function EvidencePreview({
             onStatusChange();
         } catch (err: any) {
             console.error(err);
+            if (isSignatureCancelled(err) && releaseXdr) {
+                setPendingAction("release");
+                setPendingUnsignedXdr(releaseXdr);
+                setShowSignatureModal(true);
+                return;
+            }
             alert(`Error releasing crypto: ${err.message || err}`);
         } finally {
             setIsSubmitting(false);
@@ -108,6 +126,44 @@ export function EvidencePreview({
         if (confirm("Are you sure you want to cancel this P2P operation?")) {
             alert("Operation cancelled.");
         }
+    };
+
+    const handleSignatureRetry = async () => {
+        if (!pendingUnsignedXdr || !escrowId || !pendingAction) return;
+        setShowSignatureModal(false);
+        setIsSubmitting(true);
+        try {
+            const signedXdr = await walletService.signTransaction(pendingUnsignedXdr);
+            if (pendingAction === "fund") {
+                await syncEscrow({ escrowId, action: "fund", signedXdr });
+                await updateOrder({ orderStatus: "locked" }, orderId);
+                alert("Escrow funded successfully on-chain!");
+            } else {
+                await syncEscrow({ escrowId, action: "release", signedXdr });
+                await updateOrder({ orderStatus: "released" }, orderId);
+                alert("Crypto released successfully!");
+            }
+            setPendingUnsignedXdr(null);
+            setPendingAction(null);
+            onStatusChange();
+        } catch (err: any) {
+            console.error("Retry signing failed:", err);
+            if (isSignatureCancelled(err)) {
+                setShowSignatureModal(true);
+                return;
+            }
+            alert(`Error: ${err.message || err}`);
+            setPendingUnsignedXdr(null);
+            setPendingAction(null);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleSignatureCancel = () => {
+        setShowSignatureModal(false);
+        setPendingUnsignedXdr(null);
+        setPendingAction(null);
     };
 
     const renderStatusDescription = () => {
@@ -131,6 +187,7 @@ export function EvidencePreview({
     const hasEvidence = escrowStatus === "fiat_sent" || escrowStatus === "released";
 
     return (
+        <>
         <div className="bg-[#161618] w-full rounded-xl flex flex-col justify-between p-[12px_16px] gap-6 font-space shrink-0 select-none">
             
             {/* 1. Estilos Locales de Inyección para Animación Shimmer de lado a lado */}
@@ -246,5 +303,13 @@ export function EvidencePreview({
                 )}
             </div>
         </div>
+
+            {showSignatureModal && (
+                <SignatureCancelledModal
+                    onRetry={handleSignatureRetry}
+                    onCancel={handleSignatureCancel}
+                />
+            )}
+        </>
     );
 }

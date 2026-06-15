@@ -77,3 +77,11 @@ export const walletService = {
         localStorage.removeItem(PUBLICKEY_KEY);
     },
 };
+
+export function isSignatureCancelled(error: unknown): boolean {
+    const msg =
+        error instanceof Error
+            ? error.message.toLowerCase()
+            : String(error).toLowerCase();
+    return msg.includes("cancel") || msg.includes("reject") || msg.includes("declined");
+}

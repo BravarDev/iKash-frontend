@@ -6,10 +6,11 @@ import { Users } from "@/features/user/models/users";
 import { useUser } from "@/features/user/presentation/context/UserContext";
 import { useOrders } from "@/features/order/hooks/useOrders";
 import { useEscrows } from "@/features/escrow/hooks/useEscrows";
-import { walletService } from "@/features/wallet/application/wallet.service";
+import { walletService, isSignatureCancelled } from "@/features/wallet/application/wallet.service";
 import { useWalletBalance } from "@/features/wallet/presentation/hooks/useWalletBalance";
 import { useRouter } from "next/navigation";
 import { useNotification } from "../../../components/NotificationContext";
+import { SignatureCancelledModal } from "./SignatureCancelledModal";
 
 interface ConfirmOrderModalProps {
     offer: Offer;
@@ -30,6 +31,10 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
     const [stats, setStats] = useState<{ totalOrders: number; completedOrders: number } | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
+    const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
+    const [pendingEscrowId, setPendingEscrowId] = useState<string | null>(null);
+    const [pendingUnsignedXdr, setPendingUnsignedXdr] = useState<string | null>(null);
+    const [showSignatureModal, setShowSignatureModal] = useState(false);
 
     const isBuyOperation = offer.type === "sell"; // Merchant is selling, User is BUYING crypto
     const priceNum = parseFloat(offer.price) || 0;
@@ -212,6 +217,13 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
                     return;
                 } catch (signErr) {
                     console.error("Signing or sync failed:", signErr);
+                    if (isSignatureCancelled(signErr)) {
+                        setPendingOrderId(orderData.orderId.replace(/-/g, ""));
+                        setPendingEscrowId(escrowId);
+                        setPendingUnsignedXdr(unsignedXdr);
+                        setShowSignatureModal(true);
+                        return;
+                    }
                     notify("error", "Failed to sign or sync the escrow transaction. Merchant should fund the escrow from trade page.");
                     router.push("/p2p/orders/" + orderData.orderId.replace(/-/g, ""));
                     return;
@@ -229,6 +241,44 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleSignatureRetry = async () => {
+        if (!pendingUnsignedXdr || !pendingEscrowId || !pendingOrderId) return;
+        setShowSignatureModal(false);
+        setIsSubmitting(true);
+        try {
+            const signedXdr = await walletService.signTransaction(pendingUnsignedXdr);
+            await syncEscrow({ escrowId: pendingEscrowId, action: "fund", signedXdr });
+            setPendingUnsignedXdr(null);
+            setPendingEscrowId(null);
+            setPendingOrderId(null);
+            notify("success", "Escrow funded successfully. Redirecting to trade view.");
+            router.push("/p2p/orders/" + pendingOrderId);
+        } catch (signErr) {
+            console.error("Retry signing failed:", signErr);
+            if (isSignatureCancelled(signErr)) {
+                setShowSignatureModal(true);
+                return;
+            }
+            notify("error", "Failed to sign the transaction.");
+            setPendingUnsignedXdr(null);
+            setPendingEscrowId(null);
+            setPendingOrderId(null);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleSignatureCancel = () => {
+        setShowSignatureModal(false);
+        setPendingUnsignedXdr(null);
+        setPendingEscrowId(null);
+        if (pendingOrderId) {
+            notify("warning", "Escrow not funded. You can fund it from the trade page.");
+            router.push("/p2p/orders/" + pendingOrderId);
+        }
+        setPendingOrderId(null);
     };
 
     return (
@@ -464,6 +514,13 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
                     </div>
                 </div>
             </div>
+            )}
+
+            {showSignatureModal && (
+                <SignatureCancelledModal
+                    onRetry={handleSignatureRetry}
+                    onCancel={handleSignatureCancel}
+                />
             )}
         </div>
     );

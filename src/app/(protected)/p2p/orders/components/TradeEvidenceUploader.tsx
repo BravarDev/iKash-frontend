@@ -3,8 +3,9 @@
 import { useState, useRef, useEffect } from "react";
 import { useEscrows } from "@/features/escrow/hooks/useEscrows";
 import { useOrders } from "@/features/order/hooks/useOrders";
-import { walletService } from "@/features/wallet/application/wallet.service";
+import { walletService, isSignatureCancelled } from "@/features/wallet/application/wallet.service";
 import { Info, Upload, FileUp, CircleCheck, Loader2 } from "lucide-react";
+import { SignatureCancelledModal } from "../../components/SignatureCancelledModal";
 
 export interface TradeEvidenceUploaderProps {
     orderId: string;
@@ -29,6 +30,8 @@ export function TradeEvidenceUploader({
     const [uploadedFile, setUploadedFile] = useState<{ name: string; size: string } | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [pendingUnsignedXdr, setPendingUnsignedXdr] = useState<string | null>(null);
+    const [showSignatureModal, setShowSignatureModal] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,6 +68,7 @@ export function TradeEvidenceUploader({
     const handleAction = async () => {
         if (isSubmitting || !buyerAddress || !escrowId) return;
         setIsSubmitting(true);
+        let actionXdr: string | null = null;
 
         try {
             if (escrowStatus === "funded") {
@@ -72,10 +76,10 @@ export function TradeEvidenceUploader({
                     buyerAddress,
                     evidence: uploadedFile ? `File: ${uploadedFile.name}` : "Payment evidence"
                 });
-                const unsignedXdr = res.unsignedFundTransaction || res.unsignedTransaction;
-                if (!unsignedXdr) throw new Error("Confirmation failed: no unsigned XDR returned");
+                actionXdr = res.unsignedFundTransaction || res.unsignedTransaction;
+                if (!actionXdr) throw new Error("Confirmation failed: no unsigned XDR returned");
                 
-                const signedXdr = await walletService.signTransaction(unsignedXdr);
+                const signedXdr = await walletService.signTransaction(actionXdr);
                 await syncEscrow({ escrowId, action: "fiat_sent", signedXdr });
                 
                 alert("Payment confirmed and registered successfully!");
@@ -83,6 +87,11 @@ export function TradeEvidenceUploader({
             }
         } catch (err: any) {
             console.error(err);
+            if (isSignatureCancelled(err) && actionXdr) {
+                setPendingUnsignedXdr(actionXdr);
+                setShowSignatureModal(true);
+                return;
+            }
             alert(`Error processing action: ${err.message || err}`);
         } finally {
             setIsSubmitting(false);
@@ -93,6 +102,34 @@ export function TradeEvidenceUploader({
         if (confirm("Are you sure you want to cancel this P2P operation?")) {
             alert("Operation cancelled.");
         }
+    };
+
+    const handleSignatureRetry = async () => {
+        if (!pendingUnsignedXdr || !escrowId) return;
+        setShowSignatureModal(false);
+        setIsSubmitting(true);
+        try {
+            const signedXdr = await walletService.signTransaction(pendingUnsignedXdr);
+            await syncEscrow({ escrowId, action: "fiat_sent", signedXdr });
+            setPendingUnsignedXdr(null);
+            alert("Payment confirmed and registered successfully!");
+            onStatusChange();
+        } catch (err: any) {
+            console.error("Retry signing failed:", err);
+            if (isSignatureCancelled(err)) {
+                setShowSignatureModal(true);
+                return;
+            }
+            alert(`Error: ${err.message || err}`);
+            setPendingUnsignedXdr(null);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleSignatureCancel = () => {
+        setShowSignatureModal(false);
+        setPendingUnsignedXdr(null);
     };
 
     const renderStatusDescription = () => {
@@ -112,6 +149,7 @@ export function TradeEvidenceUploader({
     };
 
     return (
+        <>
         <div className="bg-[#161618] w-[402.8px] h-[571.5px] rounded-[16px] flex flex-col justify-between p-[12px_16px] gap-6 font-space shrink-0 select-none">
             
             {/* Header Info Banner */}
@@ -244,5 +282,13 @@ export function TradeEvidenceUploader({
                 }
             </div>
         </div>
+
+            {showSignatureModal && (
+                <SignatureCancelledModal
+                    onRetry={handleSignatureRetry}
+                    onCancel={handleSignatureCancel}
+                />
+            )}
+        </>
     );
 }
