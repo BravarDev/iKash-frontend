@@ -14,7 +14,7 @@ export default function DashboardPage() {
             <Aside />
             <div className="flex flex-col flex-1 min-w-0">
                 <Header description="account overview" title="Welcome back," name={displayName} />
-                <main className="flex items-center justify-between pl-12">
+                <main className="flex items-start justify-between md:pl-12">
                     <WalletDashboard />
                 </main>
             </div>
