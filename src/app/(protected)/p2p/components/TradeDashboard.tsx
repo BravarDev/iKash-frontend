@@ -58,13 +58,13 @@ export function TradeDashboard() {
             <KycBanner />
 
             <div className="w-full mb-8">
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex bg-[#1a1a1a] rounded-lg p-1">
+                <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
+                    <div className="flex bg-[#1a1a1a] rounded-lg p-1 w-full md:w-auto">
                         {["Buy", "Sell"].map((t) => (
                             <button
                                 key={t}
                                 onClick={() => setTab(t)}
-                                className={`px-6 py-2 rounded-lg text-sm font-bold transition-all duration-200
+                                className={`flex-1 md:flex-none px-4 md:px-6 py-2 rounded-lg text-sm font-bold transition-all duration-200
                                     ${tab === t
                                         ? "bg-[#343434] text-[#BCED09]"
                                         : "text-[#6b7280] hover:text-white"
@@ -85,7 +85,7 @@ export function TradeDashboard() {
                         }}
                         disabled={!isVerified}
                         title={!isVerified ? "KYC verification required" : ""}
-                        className={`flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-2xl transition-all duration-200 ${isVerified ? "bg-[#BCED09] text-black hover:bg-[#d4f53a]" : "bg-gray-700 text-gray-400 cursor-not-allowed"
+                        className={`flex items-center justify-center gap-2 text-sm font-bold px-4 py-2 rounded-2xl transition-all duration-200 w-full md:w-auto ${isVerified ? "bg-[#BCED09] text-black hover:bg-[#d4f53a]" : "bg-gray-700 text-gray-400 cursor-not-allowed"
                             }`}
                     >
                         <span className="text-sm leading-none">+</span>
@@ -132,8 +132,8 @@ export function TradeDashboard() {
                     </div>
                 </div>*/}
             </div>
-            <div className="flex flex-col w-285">
-                <div className="grid grid-cols-4 px-4 pb-3 text-[10px] tracking-[1px] text-[#8F8389] uppercase font-bold">
+            <div className="flex flex-col w-full">
+                <div className="hidden md:grid grid-cols-4 px-4 pb-3 text-[10px] tracking-[1px] text-[#8F8389] uppercase font-bold">
                     <div className="flex items-center p-3">
                         <span>Merchant</span>
                     </div>
@@ -148,11 +148,11 @@ export function TradeDashboard() {
                     </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-3">
                     {visibleOffers.map((offer) => (
                         <div
                             key={offer.offerId}
-                            className="grid grid-cols-4 items-center bg-[#161618] border border-[#1F2937] rounded-3xl px-4 py-5 hover:border-[#2a2a2a] hover:bg-[#181818] transition-all duration-200"
+                            className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-[#161618] border border-[#1F2937] rounded-3xl px-4 py-5 hover:border-[#2a2a2a] hover:bg-[#181818] transition-all duration-200"
                         >
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-full bg-[#343434] flex items-center justify-center text-[#6b7280] text-[20px]">
@@ -171,7 +171,7 @@ export function TradeDashboard() {
                                 <p className="text-sm text-white">Available: <span className="font-semibold"><MerchantBalance publicKey={userFound[offer.creatorId]?.publicKey} assetCode={offer.assetCode} /></span></p>
                                 <p className="text-[11px] text-[#6b7280] mt-0.5">Limit: {offer.minAmount} - {offer.maxAmount}</p>
                             </div>
-                            <div className="flex">
+                            <div className="flex md:justify-end">
                                 <button
                                     disabled={!isVerified}
                                     onClick={() => {
@@ -182,7 +182,7 @@ export function TradeDashboard() {
                                         setSelectedOffer(offer);
                                     }}
                                     title={!isVerified ? "KYC verification required" : ""}
-                                    className={`text-sm font-bold px-6 py-2.5 rounded-lg transition-all duration-200 ${isVerified ? "bg-[#bced09] hover:bg-[#d4f53a] text-black hover:scale-105 active:scale-95" : "bg-gray-700 text-gray-400 cursor-not-allowed"
+                                    className={`text-sm font-bold px-6 py-2.5 rounded-lg transition-all duration-200 w-full md:w-auto ${isVerified ? "bg-[#bced09] hover:bg-[#d4f53a] text-black hover:scale-105 active:scale-95" : "bg-gray-700 text-gray-400 cursor-not-allowed"
                                         }`}
                                 >
                                     {tab === "Buy" ? "BUY" : "SELL"}
