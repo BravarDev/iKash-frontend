@@ -2,11 +2,12 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { useState } from 'react'
 import { useWallet } from '@/features/wallet'
 import { useUser } from '@/features/user/presentation/context/UserContext'
-import { LayoutGrid, ArrowLeftRight, Database, Settings } from 'lucide-react';
+import { LayoutGrid, ArrowLeftRight, Database, Settings } from 'lucide-react'
 
-const links = [
+const navLinks = [
     { href: '/dashboard', label: 'Home', icon: LayoutGrid },
     { href: '/p2p', label: 'P2P', icon: ArrowLeftRight },
     { href: '/transactions', label: 'Transactions', icon: Database },
@@ -17,6 +18,7 @@ export function Aside() {
     const router = useRouter()
     const { disconnect } = useWallet()
     const { setCurrentUser, setAccessToken } = useUser()
+    const [menuOpen, setMenuOpen] = useState(false)
 
     const handleLogout = () => {
         disconnect()
@@ -27,54 +29,41 @@ export function Aside() {
 
     return (
         <>
-            {/* Desktop sidebar */}
+            {/* Desktop sidebar — unchanged */}
             <aside className="hidden md:flex w-[288px] sticky top-0 h-screen self-start shrink-0 overflow-y-auto bg-[#343434] flex-col p-8">
                 <div className="pl-3 pt-4">
-                    <Image
-                        src='/iKash.svg'
-                        width={80}
-                        height={30}
-                        alt='iKash logo'
-                    />
+                    <Image src='/iKash.svg' width={80} height={30} alt='iKash logo' />
                 </div>
 
                 <nav className="flex flex-col gap-7.5 pt-20">
-                    {links.map((link) => {
-                        const isActive = pathname === link.href;
-                        const IconComponent = link.icon;
-
+                    {navLinks.map((link) => {
+                        const isActive = pathname === link.href
+                        const IconComponent = link.icon
                         return (
                             <Link
                                 key={link.href}
                                 href={link.href}
                                 className={`flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 ease-in-out
-                                ${isActive
-                                    ? 'text-[#BCED09] font-semibold'
-                                    : 'text-[#8F8389] font-medium hover:bg-[#161618] hover:text-white'
-                                }`}
+                                ${isActive ? 'text-[#BCED09] font-semibold' : 'text-[#8F8389] font-medium hover:bg-[#161618] hover:text-white'}`}
                             >
                                 <IconComponent size={18} strokeWidth={isActive ? 2.5 : 2} />
                                 <span className='text-[18px]'>{link.label}</span>
                             </Link>
-                        );
+                        )
                     })}
                 </nav>
 
                 <div className="mt-auto flex flex-col gap-4 pb-5">
                     <div className="border-t border-gray-700 mb-2" />
-
                     <Link
                         href="/settings"
                         className={`flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 ease-in-out ${
-                            pathname.startsWith('/settings')
-                                ? 'text-[#BCED09] font-semibold'
-                                : 'text-[#8F8389] font-medium hover:bg-[#161618] hover:text-white'
+                            pathname.startsWith('/settings') ? 'text-[#BCED09] font-semibold' : 'text-[#8F8389] font-medium hover:bg-[#161618] hover:text-white'
                         }`}
                     >
                         <Settings size={18} strokeWidth={pathname.startsWith('/settings') ? 2.5 : 2} />
                         <span className='text-[18px]'>Settings</span>
                     </Link>
-
                     <button
                         onClick={handleLogout}
                         className="flex items-center gap-3 px-3 py-2 rounded-md text-[#8F8389] cursor-pointer transition-all duration-200 ease-in-out hover:bg-[#161618] hover:text-white"
@@ -85,32 +74,105 @@ export function Aside() {
                 </div>
             </aside>
 
-            {/* Mobile bottom navigation */}
-            <nav className="fixed bottom-0 left-0 right-0 z-50 flex md:hidden items-center justify-around bg-[#161618] border-t border-[#1F2937] px-2 py-3">
-                {links.map((link) => {
-                    const isActive = pathname === link.href;
-                    const IconComponent = link.icon;
-                    return (
-                        <Link
-                            key={link.href}
-                            href={link.href}
-                            className={`flex flex-col items-center gap-1 px-4 py-1 rounded-md transition-colors duration-200
-                                ${isActive ? 'text-[#BCED09]' : 'text-[#8F8389]'}`}
-                        >
-                            <IconComponent size={22} strokeWidth={isActive ? 2.5 : 2} />
-                            <span className="text-[10px] tracking-wide">{link.label}</span>
-                        </Link>
-                    );
-                })}
-                <Link
-                    href="/settings"
-                    className={`flex flex-col items-center gap-1 px-4 py-1 rounded-md transition-colors duration-200
-                        ${pathname.startsWith('/settings') ? 'text-[#BCED09]' : 'text-[#8F8389]'}`}
+            {/* Mobile hamburger */}
+            <div className="md:hidden fixed top-4 left-4 z-50">
+                <button
+                    onClick={() => setMenuOpen(!menuOpen)}
+                    className="flex flex-col gap-[5px] p-2"
+                    aria-label="Open menu"
                 >
-                    <Settings size={22} strokeWidth={pathname.startsWith('/settings') ? 2.5 : 2} />
-                    <span className="text-[10px] tracking-wide">Settings</span>
-                </Link>
-            </nav>
+                    <span className="block w-5 h-[2px] bg-white" />
+                    <span className="block w-5 h-[2px] bg-white" />
+                    <span className="block w-5 h-[2px] bg-white" />
+                </button>
+
+                {menuOpen && (
+                    <div className="absolute top-10 left-0 bg-[#0e0e0e] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-3 min-w-[160px]">
+                        <p className="text-[#BCED09] text-xs font-bold tracking-widest uppercase mb-1">Menu</p>
+                        <Link
+                            href="/settings"
+                            onClick={() => setMenuOpen(false)}
+                            className="flex items-center gap-3 text-white text-sm hover:text-[#BCED09] transition-colors"
+                        >
+                            <Settings size={16} />
+                            Settings
+                        </Link>
+                        <button
+                            onClick={() => { setMenuOpen(false); handleLogout() }}
+                            className="flex items-center gap-3 text-white text-sm hover:text-[#BCED09] transition-colors"
+                        >
+                            <Image src='/logout-icon.svg' width={16} height={16} alt='logout' />
+                            Logout
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {/* Mobile bottom navigation */}
+            <div className="md:hidden fixed bottom-0 left-0 right-0 z-40">
+                <div className="relative w-full" style={{ height: '70px' }}>
+                    {/* SVG bar with dynamic notch */}
+                    <svg
+                        viewBox="0 0 375 70"
+                        preserveAspectRatio="none"
+                        className="absolute inset-0 w-full h-full"
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        {(() => {
+                            const activeIndex = navLinks.findIndex(l => pathname === l.href)
+                            const totalLinks = navLinks.length
+                            const slotWidth = 375 / totalLinks
+                            const cx = activeIndex >= 0 ? slotWidth * activeIndex + slotWidth / 2 : -999
+                            const r = 32
+                            const notchDepth = 22
+
+                            const path = activeIndex >= 0
+                                ? `M0,0 
+                                   L${cx - r - 15},0 
+                                   Q${cx - r - 5},0 ${cx - r},${notchDepth * 0.4}
+                                   Q${cx - r * 0.5},${notchDepth} ${cx},${notchDepth}
+                                   Q${cx + r * 0.5},${notchDepth} ${cx + r},${notchDepth * 0.4}
+                                   Q${cx + r + 5},0 ${cx + r + 15},0
+                                   L375,0 L375,70 L0,70 Z`
+                                : `M0,0 L375,0 L375,70 L0,70 Z`
+
+                            return <path d={path} fill="#0e0e0e" />
+                        })()}
+                    </svg>
+
+                    {/* Nav icons */}
+                    <div className="absolute inset-0 flex items-center">
+                        {navLinks.map((link) => {
+                            const isActive = pathname === link.href
+                            const IconComponent = link.icon
+                            return (
+                                <Link
+                                    key={link.href}
+                                    href={link.href}
+                                    className="flex-1 flex flex-col items-center justify-center"
+                                    aria-label={link.label}
+                                >
+                                    {isActive ? (
+                                        <div className="flex flex-col items-center" style={{ transform: 'translateY(-14px)' }}>
+                                            <div
+                                                className="flex items-center justify-center rounded-full bg-[#BCED09]"
+                                                style={{ width: '52px', height: '52px' }}
+                                            >
+                                                <IconComponent size={24} strokeWidth={2.5} color="#000000" />
+                                            </div>
+                                            <span className="text-[10px] text-white tracking-wide mt-1">
+                                                {link.label}
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <IconComponent size={22} strokeWidth={2} color="#8F8389" />
+                                    )}
+                                </Link>
+                            )
+                        })}
+                    </div>
+                </div>
+            </div>
         </>
     )
 }
