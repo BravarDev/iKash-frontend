@@ -16,15 +16,15 @@ export default function SettingsPage() {
         <div className="flex min-h-screen w-full bg-[#010308]">
             <Aside />
             <div className="flex flex-col flex-1 min-w-0">
-                <Header title="SETTINGS" showSearch={false} showUser={false} />
+                <Header title="SETTINGS" />
                 
                 {/* Navigation Tabs */}
-                <div className="flex items-center gap-8 px-12 pt-6 bg-[#0A0D14]/30 border-b border-[#1A1F26]">
+                <div className="border-b border-[#1A1F26] bg-[#0A0D14]/30 px-4 pt-4 sm:px-6 lg:px-8 lg:pt-6">
                     {tabs.map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`pb-4 font-medium text-[16px] transition-colors cursor-pointer ${
+                            className={`pb-4 pr-6 font-medium text-[15px] transition-colors cursor-pointer sm:text-[16px] ${
                                 activeTab === tab.id
                                     ? "text-[#BCED09] font-semibold border-b-2 border-[#BCED09]"
                                     : "text-[#8F8389] hover:text-white border-b-2 border-transparent"
