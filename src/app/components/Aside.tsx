@@ -74,39 +74,61 @@ export function Aside() {
                 </div>
             </aside>
 
-            {/* Mobile hamburger */}
-            <div className="md:hidden fixed top-4 left-4 z-50">
-                <button
-                    onClick={() => setMenuOpen(!menuOpen)}
-                    className="flex flex-col gap-[5px] p-2"
-                    aria-label="Open menu"
-                >
-                    <span className="block w-5 h-[2px] bg-white" />
-                    <span className="block w-5 h-[2px] bg-white" />
-                    <span className="block w-5 h-[2px] bg-white" />
-                </button>
-
-                {menuOpen && (
-                    <div className="absolute top-10 left-0 bg-[#0e0e0e] border border-[#1F2937] rounded-xl p-4 flex flex-col gap-3 min-w-[160px]">
-                        <p className="text-[#BCED09] text-xs font-bold tracking-widest uppercase mb-1">Menu</p>
+            {/* Mobile header — hamburger / menu toggle */}
+            <div
+                className="md:hidden fixed top-0 left-0 right-0 z-50 px-5 pt-5 pb-6 transition-colors duration-200"
+                style={{ background: menuOpen ? '#000000' : 'transparent' }}
+            >
+                {!menuOpen ? (
+                    <button
+                        onClick={() => setMenuOpen(true)}
+                        className="flex flex-col gap-[5px] p-2"
+                        aria-label="Open menu"
+                    >
+                        <span className="block w-5 h-[2px] bg-white" />
+                        <span className="block w-5 h-[2px] bg-white" />
+                        <span className="block w-5 h-[2px] bg-white" />
+                    </button>
+                ) : (
+                    <div className="flex flex-col gap-5">
+                        <button
+                            onClick={() => setMenuOpen(false)}
+                            className="text-left text-[#BCED09] text-base font-bold tracking-widest uppercase"
+                            aria-label="Close menu"
+                        >
+                            Menu
+                        </button>
                         <Link
                             href="/settings"
                             onClick={() => setMenuOpen(false)}
-                            className="flex items-center gap-3 text-white text-sm hover:text-[#BCED09] transition-colors"
+                            className="flex items-center gap-3 text-white text-[17px] hover:text-[#BCED09] transition-colors"
                         >
-                            <Settings size={16} />
+                            <Settings size={24} strokeWidth={2} />
                             Settings
                         </Link>
                         <button
                             onClick={() => { setMenuOpen(false); handleLogout() }}
-                            className="flex items-center gap-3 text-white text-sm hover:text-[#BCED09] transition-colors"
+                            className="flex items-center gap-3 text-white text-[17px] hover:text-[#BCED09] transition-colors"
                         >
-                            <Image src='/logout-icon.svg' width={16} height={16} alt='logout' />
+                            <Image src='/logout-icon.svg' width={24} height={24} alt='logout' />
                             Logout
                         </button>
                     </div>
                 )}
             </div>
+
+            {/* Full-page blur overlay, sits below the menu panel, fades the rest of the page */}
+            {menuOpen && (
+                <div
+                    className="md:hidden fixed inset-0 z-40 transition-opacity duration-200"
+                    onClick={() => setMenuOpen(false)}
+                    style={{
+                        backdropFilter: 'blur(8px)',
+                        WebkitBackdropFilter: 'blur(8px)',
+                        background: 'rgba(0,0,0,0.35)',
+                    }}
+                />
+            )}
 
             {/* Mobile bottom navigation */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 z-40">
