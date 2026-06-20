@@ -26,14 +26,14 @@ export function Aside() {
     }
 
     return (
-        <aside className="hidden md:flex w-[288px] sticky top-0 h-screen self-start shrink-0 overflow-y-auto bg-[#343434] flex-col p-8">
+        <aside className="hidden md:flex w-[288px] sticky top-0 h-screen self-start shrink-0 overflow-y-auto bg-[#161618] flex-col p-8">
 
             <div className="pl-3 pt-4">
                 <Image
-                    src='/iKash.svg'
-                    width={80}
-                    height={30}
-                    alt='icono de settings del aside'
+                    src='/ikashlogotipo.svg'
+                    width={100}
+                    height={38}
+                    alt="iKash Logo"
                 />
             </div>
 

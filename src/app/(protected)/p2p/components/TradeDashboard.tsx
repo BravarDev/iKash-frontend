@@ -36,7 +36,7 @@ export function TradeDashboard() {
 
     // If user wants to "Buy", they need to see offers where the merchant is "selling".
     // If user wants to "Sell", they need to see offers where the merchant is "buying".
-    const { offers } = useOffers({ type: tab === "Buy" ? "sell" : "buy" });
+    const { offers, isLoading } = useOffers({ type: tab === "Buy" ? "sell" : "buy" });
     // Filter out offers that have been executed/archived server-side
     const visibleOffers = offers.filter(o => !o.executed);
 
@@ -132,64 +132,105 @@ export function TradeDashboard() {
                     </div>
                 </div>*/}
             </div>
-            <div className="flex flex-col w-285">
-                <div className="grid grid-cols-4 px-4 pb-3 text-[10px] tracking-[1px] text-[#8F8389] uppercase font-bold">
-                    <div className="flex items-center p-3">
-                        <span>Merchant</span>
-                    </div>
-                    <div className="flex items-center p-3">
-                        <span>Price</span>
-                    </div>
-                    <div className="flex items-center p-3">
-                        <span>Limits / Available</span>
-                    </div>
-                    <div className="flex items-center p-3">
-                        <span className="text-right">Action</span>
-                    </div>
-                </div>
-
-                <div className="space-y-2">
-                    {visibleOffers.map((offer) => (
-                        <div
-                            key={offer.offerId}
-                            className="grid grid-cols-4 items-center bg-[#161618] border border-[#1F2937] rounded-3xl px-4 py-5 hover:border-[#2a2a2a] hover:bg-[#181818] transition-all duration-200"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-[#343434] flex items-center justify-center text-[#6b7280] text-[20px]">
-                                    👤
-                                </div>
-                                <div>
-                                    <p className="text-white font-semibold text-sm">{userFound[offer.creatorId]?.alias}</p>
-                                </div>
-                            </div>
-                            <div>
-                                <span className="text-white font-bold text-lg tabular-nums">{offer.price}</span>
-                                <span className="text-[#6b7280] text-xs ml-1">USD</span>
-                                <p className="text-[10px] text-[#4b5563] mt-0.5 tracking-wide">1 {offer.assetCode || "BTC"} MARKET PRICE</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-white">Available: <span className="font-semibold"><MerchantBalance publicKey={userFound[offer.creatorId]?.publicKey} assetCode={offer.assetCode} /></span></p>
-                                <p className="text-[11px] text-[#6b7280] mt-0.5">Limit: {offer.minAmount} - {offer.maxAmount}</p>
-                            </div>
-                            <div className="flex">
-                                <button
-                                    disabled={!isVerified}
-                                    onClick={() => {
-                                        if (!isVerified) {
-                                            alert("KYC verification required to trade.");
-                                            return;
-                                        }
-                                        setSelectedOffer(offer);
-                                    }}
-                                    title={!isVerified ? "KYC verification required" : ""}
-                                    className={`text-sm font-bold px-6 py-2.5 rounded-lg transition-all duration-200 ${isVerified ? "bg-[#bced09] hover:bg-[#d4f53a] text-black hover:scale-105 active:scale-95" : "bg-gray-700 text-gray-400 cursor-not-allowed"
-                                        }`}
-                                >
-                                    {tab === "Buy" ? "BUY" : "SELL"}
-                                </button>
-                            </div>
+            <div className="flex flex-col w-full">
+                <div className="space-y-4">
+                    {isLoading ? (
+                        <div className="flex justify-center py-20">
+                            <div className="w-10 h-10 border-4 border-[#1F2937] border-t-[#BCED09] rounded-full animate-spin"></div>
                         </div>
-                    ))}
+                    ) : visibleOffers.length > 0 ? (
+                        visibleOffers.map((offer) => {
+                            const paymentMethods = [
+                                ...(offer.payment_methods || []),
+                                ...(offer.paymentMethods || [])
+                            ];
+                            
+                            return (
+                                <div
+                                    key={offer.offerId}
+                                    className="flex flex-col xl:flex-row bg-[#161618] border border-[#1F2937] rounded-2xl p-6 hover:border-[#BCED09] hover:bg-[#1A1A1C] transition-all duration-300 group gap-6 xl:gap-0"
+                                >
+                                {/* Left: Identity and Capacity */}
+                                <div className="flex flex-col gap-6 xl:w-[40%]">
+                                    {/* Identity */}
+                                    <div className="flex items-center gap-3">
+                                        <div className="relative">
+                                            <div className="w-12 h-12 rounded-full bg-[#343434] overflow-hidden flex items-center justify-center text-[#6b7280] text-xl">
+                                                👤
+                                            </div>
+                                            <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-[#BCED09] border-2 border-[#161618] rounded-full"></div>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-white font-bold text-base">{userFound[offer.creatorId]?.alias || "Unknown"}</span>
+                                            <span className="text-[#BCED09] text-xs font-semibold mt-0.5 tracking-wide">1,420 ORDERS • 98.5%</span>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Capacity */}
+                                    <div className="flex gap-12">
+                                        <div className="flex flex-col gap-1.5">
+                                            <span className="text-[#8F8389] text-[10px] font-bold tracking-widest uppercase">Available</span>
+                                            <span className="text-white font-bold text-sm"><MerchantBalance publicKey={userFound[offer.creatorId]?.publicKey} assetCode={offer.assetCode} /> {offer.assetCode || "BTC"}</span>
+                                        </div>
+                                        <div className="flex flex-col gap-1.5">
+                                            <span className="text-[#8F8389] text-[10px] font-bold tracking-widest uppercase">Limits</span>
+                                            <span className="text-white font-bold text-sm">${offer.minAmount} - ${offer.maxAmount}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Center: Flexibility */}
+                                <div className="flex flex-col gap-4 xl:w-[30%] xl:border-l border-[#2D2D2D] xl:pl-8 justify-center">
+                                    <span className="text-[#A1969C] text-[10px] font-bold tracking-widest uppercase">Payment Methods</span>
+                                    <div className="flex flex-col gap-2.5">
+                                        {paymentMethods.length > 0 ? (
+                                            paymentMethods.slice(0, 3).map((pm, i) => (
+                                                <span key={i} className="text-white font-bold text-sm uppercase tracking-wide">
+                                                    {typeof pm === 'string' ? pm : (pm.payment_provider?.name || pm.bankName || pm.type || "WIRE")}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span className="text-white font-bold text-sm uppercase tracking-wide">WIRE</span>
+                                        )}
+                                        {paymentMethods.length > 3 && (
+                                            <span className="text-[#8F8389] font-bold text-xs uppercase tracking-wide">+{paymentMethods.length - 3} MORE</span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Right: Immediate Action */}
+                                <div className="flex flex-col items-start xl:items-end gap-5 xl:w-[30%] xl:border-l border-[#2D2D2D] xl:pr-4 justify-center">
+                                    <div className="flex flex-col items-start xl:items-end gap-1.5">
+                                        <span className="text-[#A1969C] text-[10px] font-bold tracking-widest uppercase">Unit Price</span>
+                                        <div className="flex items-baseline gap-1.5">
+                                            <span className="text-[#BCED09] font-bold text-[32px] tabular-nums tracking-tight leading-none">
+                                                {parseFloat(offer.price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                            </span>
+                                            <span className="text-[#8F8389] font-bold text-sm">USD</span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        disabled={!isVerified}
+                                        onClick={() => {
+                                            if (!isVerified) {
+                                                alert("KYC verification required to trade.");
+                                                return;
+                                            }
+                                            setSelectedOffer(offer);
+                                        }}
+                                        className={`w-full max-w-[220px] py-3.5 rounded-xl font-bold text-sm tracking-wide transition-all duration-300 ${isVerified ? "bg-[#BCED09] text-black hover:shadow-[0_0_20px_rgba(188,237,9,0.25)] hover:scale-[1.02] active:scale-[0.98]" : "bg-gray-700 text-gray-400 cursor-not-allowed"}`}
+                                    >
+                                        {tab === "Buy" ? "BUY" : "SELL"}
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })
+                    ) : (
+                        <div className="flex justify-center py-20 text-[#8F8389] text-sm font-bold tracking-widest uppercase">
+                            No offers found
+                        </div>
+                    )}
                 </div>
             </div>
 
