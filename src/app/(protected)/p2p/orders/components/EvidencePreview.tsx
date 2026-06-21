@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useEscrows } from "@/features/escrow/hooks/useEscrows";
 import { useOrders } from "@/features/order/hooks/useOrders";
-import { walletService, isSignatureCancelled } from "@/features/wallet/application/wallet.service";
+import { isSignatureCancelled } from "@/features/wallet/application/wallet.service";
+import { useSignatureCancellation } from "@/features/wallet/hooks/useSignatureCancellation";
 import { Info, CircleCheck, Loader2, Eye } from "lucide-react";
 import { SignatureCancelledModal } from "../../components/SignatureCancelledModal";
 
@@ -33,9 +34,7 @@ export function EvidencePreview({
     const [timeLeft, setTimeLeft] = useState<string>("00:00");
     const [isExpired, setIsExpired] = useState(false);
     const [pendingAction, setPendingAction] = useState<"fund" | "release" | null>(null);
-    const [pendingUnsignedXdr, setPendingUnsignedXdr] = useState<string | null>(null);
-    const [showSignatureModal, setShowSignatureModal] = useState(false);
-    // Eliminado: unsignedXdr y copied
+    const sig = useSignatureCancellation();
 
     useEffect(() => {
         if (!expiresAt) return;
@@ -68,23 +67,18 @@ export function EvidencePreview({
         } 
         console.log("Initiating escrow funding process for escrowId:", escrowId);
         setIsSubmitting(true);
-        let fundXdr: string | null = null;
         try {
             const res = await fundEscrow({ escrowId, signerAddress: sellerAddress, amount });
-            fundXdr = res.unsignedFundTransaction || res.unsignedTransaction;
+            const fundXdr = res.unsignedFundTransaction || res.unsignedTransaction;
             if (!fundXdr) throw new Error("Funding failed: no unsigned XDR returned");
-            // Firmar automáticamente usando el walletService interno
-            const signedXdr = await walletService.signTransaction(fundXdr);
+            const signedXdr = await sig.sign(fundXdr);
             await syncEscrow({ escrowId, action: "fund", signedXdr });
             await updateOrder({ orderStatus: "locked" }, orderId);
             alert("Escrow funded successfully on-chain!");
             onStatusChange();
         } catch (err: any) {
-            console.error(err);
-            if (isSignatureCancelled(err) && fundXdr) {
+            if (isSignatureCancelled(err)) {
                 setPendingAction("fund");
-                setPendingUnsignedXdr(fundXdr);
-                setShowSignatureModal(true);
                 return;
             }
             alert(`Error: ${err.message || err}`);
@@ -96,24 +90,20 @@ export function EvidencePreview({
     const handleReleaseAction = async () => {
         if (isSubmitting || !sellerAddress || !escrowId) return;
         setIsSubmitting(true);
-        let releaseXdr: string | null = null;
         try {
             const res = await releaseEscrow({ escrowId, releaseSigner: sellerAddress });
-            releaseXdr = res.unsignedFundTransaction || res.unsignedTransaction;
+            const releaseXdr = res.unsignedFundTransaction || res.unsignedTransaction;
             if (!releaseXdr) throw new Error("Release failed: no unsigned XDR returned");
             
-            const signedXdr = await walletService.signTransaction(releaseXdr);
+            const signedXdr = await sig.sign(releaseXdr);
             await syncEscrow({ escrowId, action: "release", signedXdr });
             await updateOrder({ orderStatus: "released" }, orderId);
             
             alert("Crypto released successfully!");
             onStatusChange();
         } catch (err: any) {
-            console.error(err);
-            if (isSignatureCancelled(err) && releaseXdr) {
+            if (isSignatureCancelled(err)) {
                 setPendingAction("release");
-                setPendingUnsignedXdr(releaseXdr);
-                setShowSignatureModal(true);
                 return;
             }
             alert(`Error releasing crypto: ${err.message || err}`);
@@ -129,11 +119,10 @@ export function EvidencePreview({
     };
 
     const handleSignatureRetry = async () => {
-        if (!pendingUnsignedXdr || !escrowId || !pendingAction) return;
-        setShowSignatureModal(false);
+        if (!escrowId || !pendingAction) return;
         setIsSubmitting(true);
         try {
-            const signedXdr = await walletService.signTransaction(pendingUnsignedXdr);
+            const signedXdr = await sig.retry();
             if (pendingAction === "fund") {
                 await syncEscrow({ escrowId, action: "fund", signedXdr });
                 await updateOrder({ orderStatus: "locked" }, orderId);
@@ -143,17 +132,13 @@ export function EvidencePreview({
                 await updateOrder({ orderStatus: "released" }, orderId);
                 alert("Crypto released successfully!");
             }
-            setPendingUnsignedXdr(null);
             setPendingAction(null);
             onStatusChange();
         } catch (err: any) {
-            console.error("Retry signing failed:", err);
             if (isSignatureCancelled(err)) {
-                setShowSignatureModal(true);
                 return;
             }
             alert(`Error: ${err.message || err}`);
-            setPendingUnsignedXdr(null);
             setPendingAction(null);
         } finally {
             setIsSubmitting(false);
@@ -161,8 +146,7 @@ export function EvidencePreview({
     };
 
     const handleSignatureCancel = () => {
-        setShowSignatureModal(false);
-        setPendingUnsignedXdr(null);
+        sig.cancel();
         setPendingAction(null);
     };
 
@@ -304,7 +288,7 @@ export function EvidencePreview({
             </div>
         </div>
 
-            {showSignatureModal && (
+            {sig.showModal && (
                 <SignatureCancelledModal
                     onRetry={handleSignatureRetry}
                     onCancel={handleSignatureCancel}

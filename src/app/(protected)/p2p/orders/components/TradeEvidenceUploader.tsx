@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useEscrows } from "@/features/escrow/hooks/useEscrows";
 import { useOrders } from "@/features/order/hooks/useOrders";
-import { walletService, isSignatureCancelled } from "@/features/wallet/application/wallet.service";
+import { isSignatureCancelled } from "@/features/wallet/application/wallet.service";
+import { useSignatureCancellation } from "@/features/wallet/hooks/useSignatureCancellation";
 import { Info, Upload, FileUp, CircleCheck, Loader2 } from "lucide-react";
 import { SignatureCancelledModal } from "../../components/SignatureCancelledModal";
 
@@ -30,9 +31,8 @@ export function TradeEvidenceUploader({
     const [uploadedFile, setUploadedFile] = useState<{ name: string; size: string } | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [pendingUnsignedXdr, setPendingUnsignedXdr] = useState<string | null>(null);
-    const [showSignatureModal, setShowSignatureModal] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const sig = useSignatureCancellation();
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -68,30 +68,23 @@ export function TradeEvidenceUploader({
     const handleAction = async () => {
         if (isSubmitting || !buyerAddress || !escrowId) return;
         setIsSubmitting(true);
-        let actionXdr: string | null = null;
-
         try {
             if (escrowStatus === "funded") {
                 const res = await markFiatSent(escrowId, {
                     buyerAddress,
                     evidence: uploadedFile ? `File: ${uploadedFile.name}` : "Payment evidence"
                 });
-                actionXdr = res.unsignedFundTransaction || res.unsignedTransaction;
+                const actionXdr = res.unsignedFundTransaction || res.unsignedTransaction;
                 if (!actionXdr) throw new Error("Confirmation failed: no unsigned XDR returned");
                 
-                const signedXdr = await walletService.signTransaction(actionXdr);
+                const signedXdr = await sig.sign(actionXdr);
                 await syncEscrow({ escrowId, action: "fiat_sent", signedXdr });
                 
                 alert("Payment confirmed and registered successfully!");
                 onStatusChange();
             }
         } catch (err: any) {
-            console.error(err);
-            if (isSignatureCancelled(err) && actionXdr) {
-                setPendingUnsignedXdr(actionXdr);
-                setShowSignatureModal(true);
-                return;
-            }
+            if (isSignatureCancelled(err)) return;
             alert(`Error processing action: ${err.message || err}`);
         } finally {
             setIsSubmitting(false);
@@ -105,31 +98,23 @@ export function TradeEvidenceUploader({
     };
 
     const handleSignatureRetry = async () => {
-        if (!pendingUnsignedXdr || !escrowId) return;
-        setShowSignatureModal(false);
+        if (!escrowId) return;
         setIsSubmitting(true);
         try {
-            const signedXdr = await walletService.signTransaction(pendingUnsignedXdr);
+            const signedXdr = await sig.retry();
             await syncEscrow({ escrowId, action: "fiat_sent", signedXdr });
-            setPendingUnsignedXdr(null);
             alert("Payment confirmed and registered successfully!");
             onStatusChange();
         } catch (err: any) {
-            console.error("Retry signing failed:", err);
-            if (isSignatureCancelled(err)) {
-                setShowSignatureModal(true);
-                return;
-            }
+            if (isSignatureCancelled(err)) return;
             alert(`Error: ${err.message || err}`);
-            setPendingUnsignedXdr(null);
         } finally {
             setIsSubmitting(false);
         }
     };
 
     const handleSignatureCancel = () => {
-        setShowSignatureModal(false);
-        setPendingUnsignedXdr(null);
+        sig.cancel();
     };
 
     const renderStatusDescription = () => {
@@ -283,7 +268,7 @@ export function TradeEvidenceUploader({
             </div>
         </div>
 
-            {showSignatureModal && (
+            {sig.showModal && (
                 <SignatureCancelledModal
                     onRetry={handleSignatureRetry}
                     onCancel={handleSignatureCancel}
