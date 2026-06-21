@@ -13,8 +13,13 @@ export default function DashboardPage() {
         <div className="flex min-h-screen w-full">
             <Aside />
             <div className="flex flex-col flex-1 min-w-0">
-                <Header description="account overview" title="Welcome back," name={displayName} />
-                <main className="flex items-center justify-between pl-12">
+                <Header
+                    description="account overview"
+                    title="Welcome back,"
+                    name={displayName}
+                    mobileLabel="Welcome back"
+                />
+                <main className="flex items-start justify-between md:pl-12">
                     <WalletDashboard />
                 </main>
             </div>
