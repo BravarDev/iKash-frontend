@@ -241,7 +241,10 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
     };
 
     const handleSignatureRetry = async () => {
-        if (!pendingEscrowId || !pendingOrderId) return;
+        if (!pendingEscrowId || !pendingOrderId) {
+            console.warn("Signature retry blocked — pending state incomplete", { pendingEscrowId, pendingOrderId });
+            return;
+        }
         setIsSubmitting(true);
         try {
             const signedXdr = await sig.retry();

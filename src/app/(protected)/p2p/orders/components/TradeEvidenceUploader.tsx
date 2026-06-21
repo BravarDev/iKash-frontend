@@ -7,6 +7,7 @@ import { isSignatureCancelled } from "@/features/wallet/application/wallet.servi
 import { useSignatureCancellation } from "@/features/wallet/hooks/useSignatureCancellation";
 import { Info, Upload, FileUp, CircleCheck, Loader2 } from "lucide-react";
 import { SignatureCancelledModal } from "../../components/SignatureCancelledModal";
+import { useNotification } from "../../../../components/NotificationContext";
 
 export interface TradeEvidenceUploaderProps {
     orderId: string;
@@ -32,6 +33,7 @@ export function TradeEvidenceUploader({
     const [isDragging, setIsDragging] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const { notify } = useNotification();
     const sig = useSignatureCancellation();
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,7 +82,7 @@ export function TradeEvidenceUploader({
                 const signedXdr = await sig.sign(actionXdr);
                 await syncEscrow({ escrowId, action: "fiat_sent", signedXdr });
                 
-                alert("Payment confirmed and registered successfully!");
+                notify("success", "Payment confirmed and registered successfully!");
                 onStatusChange();
             }
         } catch (err: any) {
@@ -103,11 +105,11 @@ export function TradeEvidenceUploader({
         try {
             const signedXdr = await sig.retry();
             await syncEscrow({ escrowId, action: "fiat_sent", signedXdr });
-            alert("Payment confirmed and registered successfully!");
+            notify("success", "Payment confirmed and registered successfully!");
             onStatusChange();
         } catch (err: any) {
             if (isSignatureCancelled(err)) return;
-            alert(`Error: ${err.message || err}`);
+            notify("error", `Error: ${err.message || err}`);
         } finally {
             setIsSubmitting(false);
         }

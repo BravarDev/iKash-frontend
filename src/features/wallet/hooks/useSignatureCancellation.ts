@@ -39,6 +39,10 @@ export function useSignatureCancellation(): UseSignatureCancellationReturn {
         setIsSigning(true);
         setShowModal(false);
         try {
+            // Brief delay to let the wallet extension fully settle its
+            // internal state after the cancelled popup before requesting
+            // a new signature popup.
+            await new Promise(r => setTimeout(r, 100));
             const signedXdr = await walletService.signTransaction(pendingXdr);
             setPendingXdr(null);
             return signedXdr;

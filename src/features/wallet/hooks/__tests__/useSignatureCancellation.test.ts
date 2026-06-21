@@ -177,6 +177,42 @@ describe("useSignatureCancellation", () => {
             expect(result.current.showModal).toBe(false);
         });
 
+        it("supports multiple consecutive cancel-then-retry cycles", async () => {
+            const rejectErr = { code: -4, message: "User rejected" };
+            const fakeSigned = "AAAA...signed";
+
+            mockedWalletService.signTransaction
+                .mockRejectedValueOnce(rejectErr)  // 1st sign -> cancel
+                .mockRejectedValueOnce(rejectErr)  // 1st retry -> cancel
+                .mockResolvedValueOnce(fakeSigned); // 2nd retry -> success
+            mockedIsSignatureCancelled.mockReturnValue(true);
+
+            const { result } = renderHook(() => useSignatureCancellation());
+
+            // Cycle 1: sign -> cancel
+            await act(async () => {
+                await expect(result.current.sign("AAAA...unsigned")).rejects.toBe(rejectErr);
+            });
+            expect(result.current.showModal).toBe(true);
+            expect(result.current.pendingXdr).toBe("AAAA...unsigned");
+
+            // Cycle 2: retry -> cancel (1st retry)
+            await act(async () => {
+                await expect(result.current.retry()).rejects.toBe(rejectErr);
+            });
+            expect(result.current.showModal).toBe(true);
+            expect(result.current.pendingXdr).toBe("AAAA...unsigned");
+
+            // Cycle 3: retry -> success (2nd retry)
+            let signed: string;
+            await act(async () => {
+                signed = await result.current.retry();
+            });
+            expect(signed!).toBe(fakeSigned);
+            expect(result.current.showModal).toBe(false);
+            expect(result.current.pendingXdr).toBeNull();
+        });
+
         it("throws if no pending XDR", async () => {
             const { result } = renderHook(() => useSignatureCancellation());
 

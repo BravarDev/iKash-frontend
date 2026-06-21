@@ -7,6 +7,7 @@ import { isSignatureCancelled } from "@/features/wallet/application/wallet.servi
 import { useSignatureCancellation } from "@/features/wallet/hooks/useSignatureCancellation";
 import { Info, CircleCheck, Loader2, Eye } from "lucide-react";
 import { SignatureCancelledModal } from "../../components/SignatureCancelledModal";
+import { useNotification } from "../../../../components/NotificationContext";
 
 export interface EvidencePreviewProps {
     orderId: string;
@@ -34,6 +35,7 @@ export function EvidencePreview({
     const [timeLeft, setTimeLeft] = useState<string>("00:00");
     const [isExpired, setIsExpired] = useState(false);
     const [pendingAction, setPendingAction] = useState<"fund" | "release" | null>(null);
+    const { notify } = useNotification();
     const sig = useSignatureCancellation();
 
     useEffect(() => {
@@ -74,7 +76,7 @@ export function EvidencePreview({
             const signedXdr = await sig.sign(fundXdr);
             await syncEscrow({ escrowId, action: "fund", signedXdr });
             await updateOrder({ orderStatus: "locked" }, orderId);
-            alert("Escrow funded successfully on-chain!");
+            notify("success", "Escrow funded successfully on-chain!");
             onStatusChange();
         } catch (err: any) {
             if (isSignatureCancelled(err)) {
@@ -99,7 +101,7 @@ export function EvidencePreview({
             await syncEscrow({ escrowId, action: "release", signedXdr });
             await updateOrder({ orderStatus: "released" }, orderId);
             
-            alert("Crypto released successfully!");
+            notify("success", "Crypto released successfully!");
             onStatusChange();
         } catch (err: any) {
             if (isSignatureCancelled(err)) {
@@ -126,11 +128,11 @@ export function EvidencePreview({
             if (pendingAction === "fund") {
                 await syncEscrow({ escrowId, action: "fund", signedXdr });
                 await updateOrder({ orderStatus: "locked" }, orderId);
-                alert("Escrow funded successfully on-chain!");
+                notify("success", "Escrow funded successfully on-chain!");
             } else {
                 await syncEscrow({ escrowId, action: "release", signedXdr });
                 await updateOrder({ orderStatus: "released" }, orderId);
-                alert("Crypto released successfully!");
+                notify("success", "Crypto released successfully!");
             }
             setPendingAction(null);
             onStatusChange();
