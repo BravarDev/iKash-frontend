@@ -54,7 +54,10 @@ export const freighterAdapter = {
                     ? "Public Global Stellar Network ; September 2015"
                     : "Test SDF Network ; September 2015",
         });
-        if (res?.error) throw new Error(res.error);
+        if (res?.error) {
+            const msg = typeof res.error === "string" ? res.error : (res.error?.message ?? JSON.stringify(res.error));
+            throw new Error(msg);
+        }
         return typeof res === "string"
             ? res
             : res.signedTxXdr || res.signedTransaction || res.signedXDR || res;

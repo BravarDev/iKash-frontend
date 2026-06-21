@@ -35,21 +35,20 @@ export function WalletDashboard() {
                     Total Balance
                 </p>
 
-                <div className="flex items-end justify-between">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <div className="flex items-baseline gap-3">
-                            <span className="text-[72px] font-bold text-white tracking-tight">
+                            <span className="text-[48px] sm:text-[72px] font-bold text-white tracking-tight">
                                 {isLoading ? "..." : error ? "-" : (balance || "0.00")}
                             </span>
-                            <span className="text-[#8F8389] text-[24px] tracking-[-3.6px]">XLM</span>
+                            <span className="text-[#8F8389] text-[20px] sm:text-[24px] tracking-[-3.6px]">XLM</span>
                         </div>
                         {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
                     </div>
 
-                    {/*
-                    <div className="flex gap-3">
-                        <button 
-                            className="flex items-center gap-2 bg-[#bced09] hover:bg-[#d4f53a] text-black text-xs font-bold 
+                    <div className="flex gap-3 shrink-0">
+                        <button
+                            className="flex items-center gap-2 bg-[#bced09] hover:bg-[#d4f53a] text-black text-xs font-bold
                             px-5 py-3 rounded-xl tracking-wider transition-all duration-200 hover:scale-105 active:scale-95"
                             onClick={() => setIsModalOpen(true)}
                         >
@@ -58,7 +57,7 @@ export function WalletDashboard() {
                             </svg>
                             SEND
                         </button>
-                        <button className="flex items-center gap-2 bg-[#2a2a2a] hover:bg-[#333] text-white text-xs font-bold 
+                        <button className="flex items-center gap-2 bg-[#2a2a2a] hover:bg-[#333] text-white text-xs font-bold
                             px-5 py-3 rounded-xl tracking-wider transition-all duration-200 hover:scale-105 active:scale-95 border border-[#3a3a3a]"
                             onClick={() => setIsReceiveModalOpen(true)}
                         >
@@ -67,8 +66,7 @@ export function WalletDashboard() {
                             </svg>
                             RECEIVE
                         </button>
-                    </div> 
-                    */}
+                    </div>
                 </div>
             </div>
             <div className="w-full flex flex-col mb-8">
