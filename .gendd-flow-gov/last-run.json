@@ -1,0 +1,178 @@
+{
+  "version": 2,
+  "saved_at": "2026-06-21T17:07:24.171556+00:00",
+  "command": "ai-select",
+  "scope_description": "Branch range (origin/main\u2026HEAD)",
+  "base_ref": "origin/main",
+  "head_ref": "HEAD",
+  "result": {
+    "findings": [
+      {
+        "agent": "reviewer",
+        "severity": "critical",
+        "title": "Mock user injection in production is possible due to environment variable misuse",
+        "description": "The UserContext initializes a MOCK_USER if `process.env.NEXT_PUBLIC_ENABLE_MOCK_PROFILE_UPLOAD` is true. If this environment variable is accidentally set to 'true' in a production build, legitimate users could be authenticated with mock data, leading to severe data integrity and security issues. While `NODE_ENV` checks exist in `layout.tsx`, the `UserContext` itself doesn't have this safeguard, making the behavior dependent solely on correct environment variable management during build.",
+        "file": "src/features/user/presentation/context/UserContext.tsx",
+        "line": 64,
+        "rule_id": "reviewer.ai-generated-code-smell",
+        "finding_id": null,
+        "suggested_fix": "Ensure `NEXT_PUBLIC_ENABLE_MOCK_PROFILE_UPLOAD` is always 'false' for production builds. Consider adding a runtime check for `process.env.NODE_ENV === 'development'` in `UserContext.tsx` alongside `mockProfileUploadEnabled` to prevent this behavior in production, even with a misconfigured environment variable.",
+        "plan_mode_prompt": "Plan how to prevent mock user injection in production environments by enhancing environment variable checks in `src/features/user/presentation/context/UserContext.tsx` or build processes. Deliver a plan with decision forks only.",
+        "status": null,
+        "waiver_id": null
+      },
+      {
+        "agent": "reviewer",
+        "severity": "medium",
+        "title": "Generic error catch in handleSaveProfile suppresses context",
+        "description": "The `handleSaveProfile` function uses a generic `catch {}` block. This pattern suppresses the actual error, making debugging difficult as no error details are logged or surfaced, violating the 'fail loudly' principle.",
+        "file": "src/app/(protected)/settings/components/ProfileTab.tsx",
+        "line": 105,
+        "rule_id": "reviewer.fail-loudly",
+        "finding_id": null,
+        "suggested_fix": "Modify the catch block to log the error object (e.g., `catch (error) { console.error('Error saving profile:', error); ... }`) to ensure errors are not silently swallowed.",
+        "plan_mode_prompt": "Plan to improve error handling in `src/app/(protected)/settings/components/ProfileTab.tsx` at ~L105 by logging the caught error. Deliver a plan with decision forks only.",
+        "status": null,
+        "waiver_id": null
+      },
+      {
+        "agent": "telemetry",
+        "severity": "medium",
+        "title": "Use of console.error instead of structured logger for critical API call",
+        "description": "The `uploadProfilePicture` function in `useUsers.ts` logs errors using `console.error`. If the project has a structured logging framework, this bypasses it, leading to inconsistent log formats and potential loss of valuable context (like correlation IDs, service name, request details). The `errorText` from the server response is also not explicitly logged, which could contain more specific error details.",
+        "file": "src/features/user/hooks/useUsers.ts",
+        "line": 74,
+        "rule_id": "telemetry.structured_logs",
+        "finding_id": null,
+        "suggested_fix": "Replace `console.error` with the project's structured logging utility and ensure relevant details, including the `errorText` from the server response, are captured.",
+        "plan_mode_prompt": "Plan to replace `console.error` with a structured logger in `src/features/user/hooks/useUsers.ts~L74`. Deliver a plan for logging API errors consistently and capturing full error context.",
+        "status": null,
+        "waiver_id": null
+      },
+      {
+        "agent": "telemetry",
+        "severity": "low",
+        "title": "Potential sensitive data in userSnapshot for mock uploads",
+        "description": "The `uploadProfilePicture` function appends a JSON string of `currentUser` to the `formData` as `userSnapshot` when `mockProfileUploadEnabled` is true. If `currentUser` contains PII or sensitive information (e.g., email, bio, or other user-specific data), this data is being serialized and sent in the request body, which could inadvertently be logged or exposed.",
+        "file": "src/features/user/hooks/useUsers.ts",
+        "line": 60,
+        "rule_id": "telemetry.sensitive_data",
+        "finding_id": null,
+        "suggested_fix": "Ensure `currentUser` is sanitized before being included in `userSnapshot` or evaluate if this data is strictly necessary for the mock upload process. If not, remove it.",
+        "plan_mode_prompt": "Plan to review and sanitize `currentUser` data in `src/features/user/hooks/useUsers.ts~L60` to prevent logging or exposure of sensitive information during mock profile uploads.",
+        "status": null,
+        "waiver_id": null
+      },
+      {
+        "agent": "telemetry",
+        "severity": "low",
+        "title": "Missing telemetry for client-side profile image validation errors",
+        "description": "Client-side validation for profile image selection (file type, file size) does not trigger any logs. While the user receives a UI error message, these events are not captured in telemetry. This could lead to a gap in understanding user behavior or common validation failures, making it harder to diagnose issues related to image uploads.",
+        "file": "src/app/(protected)/settings/components/ProfileTab.tsx",
+        "line": 105,
+        "rule_id": "telemetry.observability_gaps",
+        "finding_id": null,
+        "suggested_fix": "Consider adding an `info` level log (e.g., using a structured logger) for client-side validation failures, including the reason for the failure (e.g., 'invalid file type', 'file too large').",
+        "plan_mode_prompt": "Plan to add `info` level structured logs for client-side profile image validation failures in `src/app/(protected)/settings/components/ProfileTab.tsx` around `L105` and `L112`.",
+        "status": null,
+        "waiver_id": null
+      },
+      {
+        "agent": "telemetry",
+        "severity": "low",
+        "title": "Removal of notification preference toggles creates potential signal gap",
+        "description": "The notification preference toggles for trade alerts and security updates have been removed. If there was existing telemetry (e.g., metrics for toggle usage, logs for state changes) associated with these features, its removal creates a signal gap, preventing insights into user notification preferences or system behavior related to these alerts.",
+        "file": "src/app/(protected)/settings/components/ProfileTab.tsx",
+        "line": 226,
+        "rule_id": "telemetry.observability_gaps",
+        "finding_id": null,
+        "suggested_fix": "Confirm whether existing telemetry (metrics, logs) were tied to the removed notification toggles. If so, ensure any relevant data points are either preserved through other means or documented as deprecated.",
+        "plan_mode_prompt": "Investigate if removed notification toggles (`src/app/(protected)/settings/components/ProfileTab.tsx~L226`) had associated telemetry. Plan to preserve or document any critical lost signals.",
+        "status": null,
+        "waiver_id": null
+      },
+      {
+        "agent": "accessibility",
+        "severity": "low",
+        "title": "Improve profile image alt text for existing images",
+        "description": "The `img` tag displaying the user's profile picture (which can be an existing image from `currentUser.profileImageUrl`) uses `alt=\"Profile preview\"`. While acceptable for a temporary upload preview, if this element also serves to display the user's current, established profile picture, a more descriptive `alt` text (e.g., \"Your profile picture\") would be more helpful for screen reader users to understand the image's context.",
+        "file": "src/app/(protected)/settings/components/ProfileTab.tsx",
+        "line": 158,
+        "rule_id": null,
+        "finding_id": null,
+        "suggested_fix": "Dynamically set the `alt` attribute for the profile image. If `profileImagePreview` is from `currentUser.profileImageUrl`, use a more descriptive `alt` text like 'Your current profile picture'. If it's a new upload preview, 'Profile preview' is suitable.",
+        "plan_mode_prompt": "Plan to improve the `alt` text for the profile image based on whether it's an existing picture or a new upload preview. See src/app/(protected)/settings/components/ProfileTab.tsx~L158. Deliver a plan with decision forks, no code.",
+        "status": null,
+        "waiver_id": null
+      },
+      {
+        "agent": "accessibility",
+        "severity": "medium",
+        "title": "Enhance tab accessibility with ARIA roles",
+        "description": "The navigation items in `src/app/(protected)/settings/page.tsx` function as tabs. While they use semantic `<button>` elements, they lack ARIA roles (`role=\"tablist\"`, `role=\"tab\"`) and properties (`aria-selected`, `aria-controls`) which are essential for screen reader users to understand the component's structure and interaction model. Without these, assistive technologies might perceive them as a list of generic buttons rather than a tab interface.",
+        "file": "src/app/(protected)/settings/page.tsx",
+        "line": 19,
+        "rule_id": null,
+        "finding_id": null,
+        "suggested_fix": "Add `role=\"tablist\"` to the container div, `role=\"tab\"` to each button, `aria-selected` to indicate the active tab, and `aria-controls` to link each tab to its corresponding content panel (if present).",
+        "plan_mode_prompt": "Plan to add ARIA roles and properties to the tab navigation for improved accessibility. See src/app/(protected)/settings/page.tsx~L19. Deliver a plan with decision forks, no code.",
+        "status": null,
+        "waiver_id": null
+      }
+    ],
+    "by_severity": {
+      "info": 0,
+      "low": 4,
+      "medium": 3,
+      "high": 0,
+      "critical": 1
+    },
+    "passed": false,
+    "advisory": false,
+    "message": "critical: 1; low: 4; medium: 3 | GATE: critical: 1 > max 0",
+    "run": {
+      "cli_version": "4.1.0",
+      "model_provider": "vertex",
+      "model_name": "gemini-2.5-flash",
+      "context_window_tokens": 1048576,
+      "max_prompt_tokens": null,
+      "max_total_tokens": null,
+      "max_prompt_vs_context_pct": null,
+      "total_input_tokens": null,
+      "total_output_tokens": null,
+      "total_tokens": null,
+      "llm_calls": [],
+      "notes": ""
+    }
+  },
+  "replay": {
+    "diff_source": "git",
+    "git": {
+      "scope": "range",
+      "base": "origin/main",
+      "head": "HEAD",
+      "commit_sha": null
+    },
+    "specialist_labels": [
+      "reviewer",
+      "telemetry",
+      "accessibility"
+    ],
+    "model_profile": "default"
+  },
+  "routing": {
+    "rules_mode": "select",
+    "selections": {
+      "reviewer": [],
+      "telemetry": [],
+      "accessibility": []
+    },
+    "context_paths": {
+      "documentation": {
+        "related_docs": [
+          "README.md"
+        ]
+      }
+    }
+  }
+}
