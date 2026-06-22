@@ -10,7 +10,7 @@ export default function DashboardPage() {
     const displayName = currentUser?.alias || (currentUser?.publicKey ? `${currentUser.publicKey.slice(0, 6)}...` : "");
 
     return (
-        <div className="flex min-h-screen w-full">
+        <div className="flex min-h-screen w-full bg-[#010308]">
             <Aside />
             <div className="flex flex-col flex-1 min-w-0">
                 <Header
