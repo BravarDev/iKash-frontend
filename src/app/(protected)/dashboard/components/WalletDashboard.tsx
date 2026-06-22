@@ -39,10 +39,10 @@ export function WalletDashboard() {
                     <div>
                         <div className="flex items-baseline gap-3">
 
-                            <span className="text-[48px] sm:text-[72px] font-bold text-white tracking-tight">
+                            <span className="text-[40px] md:text-[72px] font-bold text-white tracking-tight">
                                 {isLoading ? "..." : error ? "-" : (balance || "0.00")}
                             </span>
-                            <span className="text-[#8F8389] text-[20px] sm:text-[24px] tracking-[-3.6px]">XLM</span>
+                            <span className="text-[#8F8389] text-[18px] md:text-[24px] tracking-[-3.6px]">XLM</span>
                         </div>
                         {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
                     </div>
