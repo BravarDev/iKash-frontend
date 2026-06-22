@@ -2,35 +2,26 @@
 
 import { useWallet } from "@/features/wallet";
 import { useUser } from "@/features/user/presentation/context/UserContext";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  const { isConnected, isLoading: walletLoading } = useWallet();
-  const { accessToken, currentUser, isLoading: userLoading } = useUser();
+  const { isConnected, isLoading } = useWallet();
+  const { currentUser } = useUser();
   const router = useRouter();
-  const pathname = usePathname();
-
-  const isLoading = walletLoading || userLoading;
-  const isSetupRoute = pathname === "/setupAccount";
+  const mockProfileUploadEnabled = process.env.NEXT_PUBLIC_ENABLE_MOCK_PROFILE_UPLOAD === "true";
+  const canBypassInDev =
+    process.env.NODE_ENV !== "production" &&
+    mockProfileUploadEnabled &&
+    Boolean(currentUser?.userId);
+  const canAccess = isConnected || canBypassInDev;
 
   useEffect(() => {
-    if (isLoading) return;
-
-    if (!isConnected) {
+    if (!isLoading && !canAccess) {
       router.replace("/welcome");
       return;
     }
-
-    if (!accessToken) {
-      router.replace("/welcome");
-      return;
-    }
-
-    if (currentUser?.pendingAccountInfo && !isSetupRoute) {
-      router.replace("/setupAccount");
-    }
-  }, [isConnected, isLoading, accessToken, currentUser, router, isSetupRoute]);
+  }, [canAccess, isLoading, router]);
 
   if (isLoading) {
     return (
@@ -40,7 +31,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
     );
   }
 
-  if (!isConnected || !accessToken) return null;
+  if (!canAccess) return null;
 
   return <>{children}</>;
 }

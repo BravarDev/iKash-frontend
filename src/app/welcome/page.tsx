@@ -563,6 +563,37 @@ function ConnectWalletModal({
       // 1. Establish wallet connection via context (Handles network checks & redirects internally)
       await connect(selectedProvider);
 
+      // 2. Network Check (Freighter only)
+      if (selectedProvider === "freighter") {
+        const { getNetwork } = await import("@stellar/freighter-api");
+        const activeNet = await getNetwork();
+        const activeNetStr =
+          typeof activeNet === "string"
+            ? activeNet
+            : (activeNet as any)?.network || "TESTNET";
+        if (activeNetStr.toUpperCase() !== "TESTNET") {
+          throw new Error(
+            "Active network is Mainnet. Please switch your wallet configuration to TESTNET.",
+          );
+        }
+      }
+
+      // 3. Environment Check (Horizon Testnet Account existence)
+      const savedKey = localStorage.getItem("wallet:publicKey");
+      if (!savedKey) {
+        throw new Error("No public key found after connection.");
+      }
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+      const accountRes = await fetch(
+        `${apiUrl}/stellar/balances/${savedKey}`,
+      );
+      if (!accountRes.ok) {
+        throw new Error(
+          "Account not funded or active on Testnet. Please fund your account via Friendbot before connecting.",
+        );
+      }
+
       // Success - context handled redirection, close modal
       onClose();
     } catch (err: any) {
