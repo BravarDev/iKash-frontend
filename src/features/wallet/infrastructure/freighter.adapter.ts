@@ -54,11 +54,9 @@ export const freighterAdapter = {
                     ? "Public Global Stellar Network ; September 2015"
                     : "Test SDF Network ; September 2015",
         });
-        // Freighter v6 returns { code: -4, message: "The user rejected this request." }
-        // when the user cancels. Throw the raw error so callers can inspect code/message fields.
-        if (res?.error) throw res.error;
-        return typeof res === "string"
-            ? res
-            : res.signedTxXdr || res.signedTransaction || res.signedXDR || res;
+        if (res?.error) {
+            const msg = typeof res.error === "string" ? res.error : (res.error?.message ?? JSON.stringify(res.error));
+            throw new Error(msg);
+        }
     }
 };
