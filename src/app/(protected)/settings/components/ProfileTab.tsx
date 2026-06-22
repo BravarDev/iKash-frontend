@@ -1,16 +1,20 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { ShieldCheck, UserCheck, CheckCircle2, Clock3, Camera, Sparkles } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { ShieldCheck, UserCheck, CheckCircle2, Clock3, Camera } from "lucide-react";
 import { useUser } from "@/features/user/presentation/context/UserContext";
 import { useUsers } from "@/features/user/hooks/useUsers";
+import { useNotification } from "@/app/components/NotificationContext";
 
 export function ProfileTab() {
     const { currentUser } = useUser();
-    const { updateUser, uploadProfilePicture } = useUsers();
+    const { updateUser, uploadProfilePicture, checkAliasAvailable } = useUsers();
+    const { notify } = useNotification();
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+    const [username, setUsername] = useState("");
     const [alias, setAlias] = useState("");
+    const [aliasError, setAliasError] = useState("");
     const [email, setEmail] = useState("");
     const [bio, setBio] = useState("");
     const [profileImagePreview, setProfileImagePreview] = useState("");
@@ -24,8 +28,12 @@ export function ProfileTab() {
     const [kycLoading, setKycLoading] = useState(false);
     const [kycError, setKycError] = useState<string | null>(null);
 
+    const aliasDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const aliasRequestSeqRef = useRef(0);
+
     useEffect(() => {
         if (currentUser) {
+            setUsername(currentUser.username || "");
             setAlias(currentUser.alias || "");
             setEmail(currentUser.email || "");
             setBio(currentUser.bio || "");
@@ -44,6 +52,10 @@ export function ProfileTab() {
             if (profileImagePreview.startsWith("blob:")) {
                 URL.revokeObjectURL(profileImagePreview);
             }
+
+            if (aliasDebounceRef.current) {
+                clearTimeout(aliasDebounceRef.current);
+            }
         };
     }, [profileImagePreview]);
 
@@ -51,15 +63,33 @@ export function ProfileTab() {
         e.preventDefault();
         if (!currentUser) return;
 
+        if (alias && !/^[a-z0-9.!_]+$/.test(alias)) {
+            setAliasError("Invalid format. Use lowercase, numbers, and ., !, _");
+            return;
+        }
+
+        if (aliasError) return;
+
         setIsSaving(true);
         setSaveMessage("");
 
         try {
-            await updateUser(currentUser.userId, {
-                alias,
+            const payload: {
+                username: string;
+                email: string;
+                bio: string;
+                alias?: string;
+            } = {
+                username,
                 email,
                 bio,
-            });
+            };
+
+            if (alias) {
+                payload.alias = alias;
+            }
+
+            await updateUser(currentUser.userId, payload);
             setSaveMessage("Profile saved successfully!");
         } catch {
             setSaveMessage("Error saving profile");
@@ -68,6 +98,51 @@ export function ProfileTab() {
             setTimeout(() => setSaveMessage(""), 3000);
         }
     };
+
+    const handleAliasChange = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            const value = e.target.value;
+            setAlias(value);
+            setAliasError("");
+
+            if (aliasDebounceRef.current) {
+                clearTimeout(aliasDebounceRef.current);
+            }
+
+            if (!value) return;
+
+            const isValid = /^[a-z0-9.!_]+$/.test(value);
+            if (!isValid) {
+                setAliasError("Invalid format. Use lowercase, numbers, and ., !, _");
+                return;
+            }
+
+            if (value !== currentUser?.alias) {
+                aliasDebounceRef.current = setTimeout(async () => {
+                    aliasRequestSeqRef.current += 1;
+                    const seq = aliasRequestSeqRef.current;
+
+                    try {
+                        const { available } = await checkAliasAvailable(value);
+
+                        if (seq !== aliasRequestSeqRef.current) return;
+
+                        if (!available) {
+                            setAliasError("This alias is already taken.");
+                        }
+                    } catch (err) {
+                        if (seq !== aliasRequestSeqRef.current) return;
+                        console.error("Failed to check alias", err);
+                        notify(
+                            "error",
+                            "Could not verify alias availability. Please check your connection and try again."
+                        );
+                    }
+                }, 500);
+            }
+        },
+        [currentUser?.alias, checkAliasAvailable, notify]
+    );
 
     const handleStartKyc = async () => {
         if (!currentUser?.userId) return;
@@ -146,12 +221,15 @@ export function ProfileTab() {
                 throw new Error("Upload failed");
             }
 
-            if (!profileImagePreview.startsWith("blob:")) {
-                setProfileImagePreview(updatedUser.profileImageUrl || "");
+            if (profileImagePreview.startsWith("blob:")) {
+                URL.revokeObjectURL(profileImagePreview);
             }
+
+            setProfileImagePreview(updatedUser.profileImageUrl || "");
             setSelectedProfileImage(null);
             setProfileImageHasError(false);
             setProfileImageMessage("Profile picture uploaded successfully!");
+
             if (fileInputRef.current) {
                 fileInputRef.current.value = "";
             }
@@ -163,7 +241,7 @@ export function ProfileTab() {
         }
     };
 
-    const initials = (currentUser?.alias || currentUser?.publicKey || "IK")
+    const initials = (currentUser?.alias || currentUser?.username || currentUser?.publicKey || "IK")
         .slice(0, 2)
         .toUpperCase();
 
@@ -175,7 +253,6 @@ export function ProfileTab() {
                         <div className="border-b border-[#1A1F26] px-5 py-5 sm:px-7 sm:py-6">
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="space-y-2">
-                              
                                     <h3 className="text-[1.6rem] font-bold tracking-tight text-[#F8FAFC] sm:text-[1.9rem]">
                                         Profile Settings
                                     </h3>
@@ -183,15 +260,11 @@ export function ProfileTab() {
                                         Refresh your public profile, update your contact details, and keep your account presentation polished across iKa$h.
                                     </p>
                                 </div>
-
-                              
                             </div>
                         </div>
 
                         <form onSubmit={handleSaveProfile} className="space-y-6 px-5 py-5 sm:px-7 sm:py-7">
                             <div className="rounded-[18px] border border-[#1A1F26] bg-[linear-gradient(180deg,rgba(9,12,18,0.98),rgba(5,7,12,0.92))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] sm:p-5">
-                              
-
                                 <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-center">
                                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                                         <div className="relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-[12px] border border-[#2B3320] bg-[#11151D] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
@@ -288,14 +361,36 @@ export function ProfileTab() {
                                         </label>
                                         <input
                                             type="text"
-                                            value={alias}
-                                            onChange={(e) => setAlias(e.target.value)}
+                                            value={username}
+                                            onChange={(e) => setUsername(e.target.value)}
                                             placeholder="Enter display name"
-                                            className="h-14 w-full rounded-[12px]  mt-2.5 border border-[#1A1F26] bg-[#05070C] px-4 text-[#F1F5F9] outline-none transition-colors placeholder:text-[#516072] focus:border-[#BCED09]"
+                                            className="mt-2.5 h-14 w-full rounded-[12px] border border-[#1A1F26] bg-[#05070C] px-4 text-[#F1F5F9] outline-none transition-colors placeholder:text-[#516072] focus:border-[#BCED09]"
                                         />
                                     </div>
 
                                     <div className="space-y-4">
+                                        <label className="text-sm font-medium text-[#F8FAFC]">
+                                            Account Alias
+                                        </label>
+                                        <div className="mt-2.5">
+                                            <input
+                                                type="text"
+                                                value={alias}
+                                                onChange={handleAliasChange}
+                                                placeholder="Enter unique alias"
+                                                className={`h-14 w-full rounded-[12px] border bg-[#05070C] px-4 text-[#F1F5F9] outline-none transition-colors placeholder:text-[#516072] ${
+                                                    aliasError
+                                                        ? "border-red-500 focus:border-red-500"
+                                                        : "border-[#1A1F26] focus:border-[#BCED09]"
+                                                }`}
+                                            />
+                                            {aliasError && (
+                                                <p className="mt-2 text-sm text-red-400">{aliasError}</p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4 md:col-span-2">
                                         <label className="text-sm font-medium text-[#F8FAFC]">
                                             Email Address
                                         </label>
@@ -304,7 +399,7 @@ export function ProfileTab() {
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
                                             placeholder="Enter email address"
-                                            className="h-14 w-full rounded-[12px] mt-2.5 border border-[#1A1F26] bg-[#05070C] px-4 text-[#F1F5F9] outline-none transition-colors placeholder:text-[#516072] focus:border-[#BCED09]"
+                                            className="mt-2.5 h-14 w-full rounded-[12px] border border-[#1A1F26] bg-[#05070C] px-4 text-[#F1F5F9] outline-none transition-colors placeholder:text-[#516072] focus:border-[#BCED09]"
                                         />
                                     </div>
                                 </div>
@@ -329,12 +424,12 @@ export function ProfileTab() {
                                         onChange={(e) => setBio(e.target.value)}
                                         placeholder="Write a short description about yourself..."
                                         rows={5}
-                                        className="w-full mt-2 rounded-[12px] border border-[#1A1F26] bg-[#05070C] px-4 py-4 text-[#F1F5F9] outline-none transition-colors placeholder:text-[#516072] focus:border-[#BCED09] resize-none"
+                                        className="mt-2 w-full resize-none rounded-[12px] border border-[#1A1F26] bg-[#05070C] px-4 py-4 text-[#F1F5F9] outline-none transition-colors placeholder:text-[#516072] focus:border-[#BCED09]"
                                     />
                                 </div>
                             </div>
 
-                            <div className="flex flex-col gap-4   sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
                                 <div className="flex min-h-6 items-center">
                                     {saveMessage && (
                                         <span className="text-sm font-medium text-[#BCED09]">
@@ -345,7 +440,7 @@ export function ProfileTab() {
 
                                 <button
                                     type="submit"
-                                    disabled={isSaving}
+                                    disabled={isSaving || !!aliasError}
                                     className="w-full rounded-[8px] bg-[#BCED09] px-6 py-3.5 text-sm font-bold text-[#010308] transition-all duration-200 hover:bg-[#d4f53a] disabled:opacity-50 sm:w-auto"
                                 >
                                     {isSaving ? "Saving..." : "Save Changes"}
@@ -374,9 +469,8 @@ export function ProfileTab() {
                                         <span className="text-sm font-semibold">Account Verified</span>
                                     </div>
 
-                                    <div className="mt-5 rounded-[12px]  bg-[#0A0E13] ">
+                                    <div className="mt-5 rounded-[12px] bg-[#0A0E13]">
                                         <div className="flex items-start gap-4">
-                                         
                                             <div className="space-y-2">
                                                 <h4 className="text-lg font-bold text-white">
                                                     KYC Tier 2 - Full Access
