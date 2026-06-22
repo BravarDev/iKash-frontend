@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Bell, ShieldCheck, UserCheck, CheckCircle2, Clock3, Monitor, Smartphone, LogOut } from "lucide-react";
 import { useUser } from "@/features/user/presentation/context/UserContext";
 import { useUsers } from "@/features/user/hooks/useUsers";
+import { useNotification } from "@/app/components/NotificationContext";
 
 export function ProfileTab() {
     const { currentUser } = useUser();
     const { updateUser, checkAliasAvailable } = useUsers();
+    const { notify } = useNotification();
 
     const [username, setUsername] = useState("");
     const [alias, setAlias] = useState("");
@@ -20,6 +22,10 @@ export function ProfileTab() {
     const [saveMessage, setSaveMessage] = useState("");
     const [kycLoading, setKycLoading] = useState(false);
     const [kycError, setKycError] = useState<string | null>(null);
+
+    // Refs for debouncing alias check and preventing race conditions
+    const aliasDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const aliasRequestSeqRef = useRef(0);
 
     useEffect(() => {
         if (currentUser) {
@@ -65,10 +71,15 @@ export function ProfileTab() {
         }
     };
 
-    const handleAliasChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleAliasChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setAlias(value);
         setAliasError("");
+
+        // Cancel any pending debounced check
+        if (aliasDebounceRef.current) {
+            clearTimeout(aliasDebounceRef.current);
+        }
 
         if (!value) return;
 
@@ -78,18 +89,34 @@ export function ProfileTab() {
             return;
         }
 
-        // Check availability if it changed from the current one
+        // Check availability only if value changed from the saved alias
         if (value !== currentUser?.alias) {
-            try {
-                const { available } = await checkAliasAvailable(value);
-                if (!available) {
-                    setAliasError("This alias is already taken.");
+            // Debounce: wait 500 ms after the user stops typing
+            aliasDebounceRef.current = setTimeout(async () => {
+                // Capture a sequence number so stale responses are discarded
+                aliasRequestSeqRef.current += 1;
+                const seq = aliasRequestSeqRef.current;
+
+                try {
+                    const { available } = await checkAliasAvailable(value);
+
+                    // Ignore if a newer request has already been issued
+                    if (seq !== aliasRequestSeqRef.current) return;
+
+                    if (!available) {
+                        setAliasError("This alias is already taken.");
+                    }
+                } catch (err) {
+                    if (seq !== aliasRequestSeqRef.current) return;
+                    console.error("Failed to check alias", err);
+                    notify(
+                        "error",
+                        "Could not verify alias availability. Please check your connection and try again."
+                    );
                 }
-            } catch (err) {
-                console.error("Failed to check alias", err);
-            }
+            }, 500);
         }
-    };
+    }, [currentUser?.alias, checkAliasAvailable, notify]);
 
     const handleToggleTradeAlerts = async () => {
         if (!currentUser) return;
