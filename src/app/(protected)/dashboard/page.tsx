@@ -13,9 +13,14 @@ export default function DashboardPage() {
     return (
         <div className="flex min-h-screen w-full bg-[#010308]">
             <Aside />
-            <div className="flex flex-col flex-1 min-w-0 pb-20 md:pb-0">
-                <Header description="account overview" title="Welcome back," name={displayName} />
-                <main className="flex items-center justify-between pl-4 md:pl-12">
+            <div className="flex flex-col flex-1 min-w-0">
+                <Header
+                    description="account overview"
+                    title="Welcome back,"
+                    name={displayName}
+                    mobileLabel="Welcome back"
+                />
+                <main className="flex items-start justify-between md:pl-12">
                     <WalletDashboard />
                 </main>
             </div>

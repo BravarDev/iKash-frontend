@@ -16,8 +16,8 @@ export default function SettingsPage() {
     return (
         <div className="flex min-h-screen w-full bg-[#010308]">
             <Aside />
-            <div className="flex flex-col flex-1 min-w-0 pb-20 md:pb-0">
-                <Header title="SETTINGS" />
+            <div className="flex flex-col flex-1 min-w-0">
+                <Header title="SETTINGS" showUser={false} />
                 
                 {/* Navigation Tabs */}
                 <div className="flex items-center gap-8 px-4 md:px-12 pt-6 bg-[#0A0D14]/30 border-b border-[#1A1F26]">
