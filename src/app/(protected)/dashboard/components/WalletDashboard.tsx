@@ -12,7 +12,7 @@ export function WalletDashboard() {
     const { publicKey } = useWallet();
     const { balance, balances, isLoading, error } = useWalletBalance(publicKey);
 
-    const [isSendModalOpen, setIsModalOpen] = useState(false);
+    const [isSendModalOpen, setIsSendModalOpen] = useState(false);
     const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
 
     const searchParams = useSearchParams();
