@@ -12,12 +12,12 @@ export default function p2pPage() {
                 <Header description="trading floor" title="p2p marketplace" />
                 <OrderNavbar />
                 <main className="flex-1 pt-0 flex flex-col lg:flex-row gap-4">
-                    <div className="px-4 lg:px-8 h-full flex-1">
+                    <div className="px-4 lg:px-8 h-full flex-1 lg:flex-[7]">
                         <TradeDashboard />
                     </div>
                     
-                    <div className="hidden lg:block w-px bg-[#1F2937] h-full" />
-                    <div className="hidden lg:flex flex-1 pt-8 px-8 flex-col gap-6 shrink-0">
+                    <div className="hidden lg:block w-px bg-[#1F2937]" />
+                    <div className="hidden lg:flex flex-[3] pt-8 px-8 flex-col gap-6 shrink-0">
                         <OrdersSummaryBox />
                     </div>
                     <div className="lg:hidden px-4 pb-4">
