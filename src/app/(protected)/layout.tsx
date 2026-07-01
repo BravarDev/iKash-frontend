@@ -19,6 +19,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     if (!isLoading && !canAccess) {
       router.replace("/welcome");
+      return;
     }
   }, [canAccess, isLoading, router]);
 

@@ -7,6 +7,7 @@ import { ConnectButton } from "@/features/wallet/presentation/components/Connect
 
 const navLinks = [
 	{ label: "Home", href: "/" },
+	{ label: "Info", href: "/info" },
 ];
 
 const walletOptions = [
@@ -34,16 +35,10 @@ export function Navbar({ onConnectClick }: { onConnectClick?: () => void }) {
 			<div className="max-w-7xl mx-auto flex items-center justify-between h-16">
 				<div className="flex flex-row">
 					<Image
-						src="/icono-ikash.svg"
+						src="/ikashlogotipo.svg"
 						alt="Logo de ikash"
-						width={70}
-						height={70}
-					/>
-					<Image
-						src="/iKash.svg"
-						alt="Logo de ikash"
-						width={55}
-						height={55}
+						width={100}
+						height={45}
 					/>
 				</div>
 
