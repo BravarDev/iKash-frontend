@@ -59,6 +59,7 @@ export function useUsers() {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
+                    ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}),
                 },
                 body: JSON.stringify(userData),
             })
@@ -119,7 +120,9 @@ export function useUsers() {
 
     const checkAliasAvailable = async (alias: string): Promise<{ available: boolean }> => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/validate-alias?alias=${alias}`)
+            const headers: Record<string, string> = {};
+            if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/validate-alias?alias=${alias}`, { headers })
             if (!res.ok) throw new Error('Check alias error');
             return await res.json();
         } catch (error) {

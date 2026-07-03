@@ -3,11 +3,14 @@ FROM node:22-slim AS builder
 
 WORKDIR /usr/src/app
 
+# Instalar pnpm globalmente
+RUN npm install -g pnpm
+
 # Copiar metadatos de dependencias
-COPY package*.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Instalar todas las dependencias
-RUN npm install
+RUN pnpm install
 
 # Copiar el código fuente y las configuraciones
 COPY . .
@@ -26,7 +29,7 @@ ENV NEXT_PUBLIC_USDC_ISSUER=$NEXT_PUBLIC_USDC_ISSUER
 ENV NEXT_PUBLIC_STELLAR_NETWORK=$NEXT_PUBLIC_STELLAR_NETWORK
 
 # Compilar NextJS para producción
-RUN npm run build
+RUN pnpm run build
 
 # --- ETAPA DE PRODUCCIÓN ---
 FROM node:22-slim AS runner
@@ -34,10 +37,14 @@ FROM node:22-slim AS runner
 WORKDIR /usr/src/app
 
 ENV NODE_ENV=production
-COPY package*.json ./
 
-# Instalar solo dependencias de producción de forma limpia
-RUN npm install --omit=dev
+# Instalar pnpm globalmente
+RUN npm install -g pnpm
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+# Instalar solo dependencias de producción más TypeScript (necesario para next.config.ts)
+RUN pnpm install --prod && pnpm add typescript
 
 # Copiar el build compilado (.next estático y de servidor)
 COPY --from=builder /usr/src/app/.next ./.next
@@ -48,4 +55,4 @@ COPY --from=builder /usr/src/app/next.config.ts ./next.config.ts
 EXPOSE 8080
 ENV PORT=8080
 
-CMD ["npm", "run", "start"]
+CMD ["pnpm", "run", "start"]

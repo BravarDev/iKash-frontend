@@ -1,8 +1,8 @@
 export interface Users {
     userId: string;
     publicKey: string;
-    username?: string;
     alias?: string;
+    username?: string;
     email?: string;
     notificationsEnabled: boolean;
     preferredCurrency?: string;
