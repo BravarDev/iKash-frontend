@@ -31,7 +31,7 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - run: pnpm install
+      - run: pnpm install --no-frozen-lockfile
 
       - run: pnpm run lint
 
@@ -66,7 +66,7 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - run: pnpm install
+      - run: pnpm install --no-frozen-lockfile
 
       - name: Authenticate Docker with Artifact Registry
         run: gcloud auth configure-docker ${{ env.REGISTRY_URL }} --quiet
