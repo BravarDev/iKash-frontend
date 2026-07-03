@@ -1,3 +1,5 @@
+import { PaymentMethodOption } from "../../paymentMethod/models/paymentMethod";
+
 export interface Offer {
     offerId: string,
     creatorId: string,
@@ -8,6 +10,6 @@ export interface Offer {
     maxAmount: string,
     status: string,
     executed?: boolean,
-    payment_methods?: any[],
-    paymentMethods?: any[]
+    payment_methods?: PaymentMethodOption[],
+    paymentMethods?: PaymentMethodOption[]
 }

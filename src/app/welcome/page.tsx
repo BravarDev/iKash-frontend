@@ -123,8 +123,8 @@ function PlanetParticles() {
         const cosTilt = Math.cos(p.tilt);
         const sinTilt = Math.sin(p.tilt);
 
-        let targetX = cx + (baseX * cosTilt - baseY * sinTilt);
-        let targetY = cy + (baseX * sinTilt + baseY * cosTilt);
+        const targetX = cx + (baseX * cosTilt - baseY * sinTilt);
+        const targetY = cy + (baseX * sinTilt + baseY * cosTilt);
 
         const dx = targetX + p.repelX - mouse.x;
         const dy = targetY + p.repelY - mouse.y;
@@ -570,7 +570,7 @@ function ConnectWalletModal({
         const activeNetStr =
           typeof activeNet === "string"
             ? activeNet
-            : (activeNet as any)?.network || "TESTNET";
+            : (activeNet as Record<string, unknown>)?.network || "TESTNET";
         if (activeNetStr.toUpperCase() !== "TESTNET") {
           throw new Error(
             "Active network is Mainnet. Please switch your wallet configuration to TESTNET.",
@@ -596,8 +596,8 @@ function ConnectWalletModal({
 
       // Success - context handled redirection, close modal
       onClose();
-    } catch (err: any) {
-      setErrorMsg(err?.message || "Connection failed. Please try again.");
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : "Connection failed. Please try again.");
       setModalState("failed");
     }
   };
@@ -835,7 +835,7 @@ function ConnectWalletModal({
 
 // --- MAIN HOMEPAGE COMPONENT ---
 export default function HomePage() {
-  const [activeTab, setActiveTab] = useState("Home");
+  const [_activeTab, _setActiveTab] = useState("Home");
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
 
   const handleConnectWallet = () => {
@@ -949,7 +949,7 @@ export default function HomePage() {
               </h3>
               <p className="text-gray-400 group-hover:text-gray-300 text-[15px] font-light leading-relaxed transition-colors duration-300">
                 Real-time tracking and professional financial analytics. Deep
-                insights into your portfolio's performance and market trends.
+                insights into your portfolio&apos;s performance and market trends.
               </p>
             </div>
           </div>
@@ -965,7 +965,7 @@ export default function HomePage() {
               </h3>
               <p className="text-gray-400 group-hover:text-gray-300 text-[15px] font-light leading-relaxed transition-colors duration-300">
                 Specialized money management built specifically for the Stellar
-                network's speed and low transaction costs.
+                network&apos;s speed and low transaction costs.
               </p>
             </div>
           </div>

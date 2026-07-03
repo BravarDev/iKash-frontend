@@ -13,7 +13,7 @@ interface Stage2Props {
 }
 
 export default function Stage2({ onNext }: Stage2Props) {
-    const [notifications, setNotifications] = useState(true);
+    const [notifications, _setNotifications] = useState(true);
     const [currency, setCurrency] = useState(currencies[0]);
     const [open, setOpen] = useState(false);
 

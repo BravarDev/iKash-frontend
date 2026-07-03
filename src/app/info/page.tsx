@@ -112,7 +112,7 @@ export default function PlatformOverviewPage() {
               </span>
               <h4 className="font-bold text-sm text-white">Direct Fiat Bank Transfer</h4>
               <p className="text-gray-400 text-xs font-light mt-1">
-                The buyer transfers the fiat currency (e.g. SINPE Móvil) directly to the seller's bank account and uploads the payment receipt.
+                The buyer transfers the fiat currency (e.g. SINPE Móvil) directly to the seller&apos;s bank account and uploads the payment receipt.
               </p>
             </div>
             {/* Step 4 */}
@@ -146,14 +146,14 @@ export default function PlatformOverviewPage() {
             <div className="space-y-4">
               <h3 className="font-bold text-lg text-[#BCED09]">3. Direct Bank-to-Bank Settlement</h3>
               <p className="text-gray-400 text-xs font-light leading-relaxed">
-                The buyer transfers the required local fiat currency directly to the seller's registered bank account (using details configured in the seller's payment methods). No fiat funds flow through iKash. Once the transfer is done, the buyer uploads the transaction screenshot as evidence. This action logs a cryptographic hash of the transaction to the Stellar ledger, proving the transfer was completed.
+                The buyer transfers the required local fiat currency directly to the seller&apos;s registered bank account (using details configured in the seller&apos;s payment methods). No fiat funds flow through iKash. Once the transfer is done, the buyer uploads the transaction screenshot as evidence. This action logs a cryptographic hash of the transaction to the Stellar ledger, proving the transfer was completed.
               </p>
             </div>
 
             <div className="space-y-4">
               <h3 className="font-bold text-lg text-[#BCED09]">4. Non-Custodial Asset Release</h3>
               <p className="text-gray-400 text-xs font-light leading-relaxed">
-                After verifying the bank transfer, the seller signs a cryptographic transaction using their wallet to approve the release of funds. The smart contract automatically executes and transfers the assets to the buyer's wallet address. In case of cooperation issues, either party can file a dispute, and a platform support key can act as a dispute resolver to release funds to the rightful owner based on the uploaded bank transfer proof.
+                After verifying the bank transfer, the seller signs a cryptographic transaction using their wallet to approve the release of funds. The smart contract automatically executes and transfers the assets to the buyer&apos;s wallet address. In case of cooperation issues, either party can file a dispute, and a platform support key can act as a dispute resolver to release funds to the rightful owner based on the uploaded bank transfer proof.
               </p>
             </div>
           </div>

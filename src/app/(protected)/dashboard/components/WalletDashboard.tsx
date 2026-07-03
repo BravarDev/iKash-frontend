@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useWallet } from "@/features/wallet";
 import { useWalletBalance } from "@/features/wallet/presentation/hooks/useWalletBalance";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { SendFundsModal } from "./SendFundsModal";
 import { ReceiveFundsModal } from "./ReceiveFundsModal";
 import { useSearchParams } from "next/navigation";
@@ -12,18 +12,12 @@ export function WalletDashboard() {
     const { publicKey } = useWallet();
     const { balance, balances, isLoading, error } = useWalletBalance(publicKey);
 
-    const [isSendModalOpen, setIsSendModalOpen] = useState(false);
     const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
 
     const searchParams = useSearchParams();
-
-    useEffect(() => {
-        const sendParam = searchParams.get("send");
-        const walletParam = searchParams.get("wallet");
-        if (sendParam === "true" || walletParam) {
-            setIsSendModalOpen(true);
-        }
-    }, [searchParams]);
+    const sendParam = searchParams.get("send");
+    const walletParam = searchParams.get("wallet");
+    const [isSendModalOpen, setIsSendModalOpen] = useState(sendParam === "true" || !!walletParam);
 
     return (
         <div className="w-full flex flex-col pt-6 px-4 pb-24 md:pt-12 md:pr-8 md:pb-12 md:pl-0 md:border-r md:border-[#1F2937] md:max-w-284">

@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { CloseModalProps } from "@/app/utils/closeModalProps";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useWallet, useWalletBalance, type AssetBalance } from "@/features/wallet";
 import { useSend } from "@/features/wallet/presentation/hooks/useSend";
 import { useSearchParams } from "next/navigation";
@@ -38,7 +38,6 @@ export function SendFundsModal({ onClose }: CloseModalProps) {
     const searchParams = useSearchParams();
     const walletQuery = searchParams.get('wallet') || "";
 
-    const defaultAsset: AssetBalance = { asset_type: "native", asset_code: "XLM", asset_issuer: null, balance: "0.00" };
     const usdcBalance = balances.find(b => b.asset_code === "USDC") ?? null;
     const sendableAsset: AssetBalance = usdcBalance ?? { asset_type: "credit_alphanum4", asset_code: "USDC", asset_issuer: null, balance: "0.00" };
 

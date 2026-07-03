@@ -4,34 +4,8 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useOrders } from "@/features/order/hooks/useOrders";
 import { useUser } from "@/features/user/presentation/context/UserContext";
+import type { Order } from "@/features/order/models/order";
 import { ShoppingCart, Check, ExternalLink, X } from "lucide-react";
-
-const MOCK_ORDERS = [
-  {
-    orderId: "mock-uuid-1",
-    isBuy: true,
-    assetAmount: "0.05",
-    assetCode: "BTC",
-    subtext: "WAITING FOR PAYMENT",
-    status: "pending",
-  },
-  {
-    orderId: "mock-uuid-2",
-    isBuy: false,
-    assetAmount: "1,500",
-    assetCode: "XLM",
-    subtext: "OCT 24, 2023",
-    status: "completed",
-  },
-  {
-    orderId: "mock-uuid-3",
-    isBuy: true,
-    assetAmount: "250",
-    assetCode: "USDT",
-    subtext: "OCT 22, 2023",
-    status: "completed",
-  }
-];
 
 export function OrdersSummaryBox() {
   const router = useRouter();
@@ -44,7 +18,7 @@ export function OrdersSummaryBox() {
     }
   }, [currentUser?.userId, fetchUserOrders]);
 
-  const formattedReal = (realOrders || []).map((o: any) => {
+  const formattedReal = (realOrders || []).map((o: Order) => {
     const isBuy = o.buyerId === currentUser?.userId;
     const dateStr = o.createdAt 
       ? new Date(o.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase()
@@ -104,7 +78,6 @@ export function OrdersSummaryBox() {
         {finalOrders.map((order) => {
           const isPending = order.status === "pending";
           const isCompleted = order.status === "completed";
-          const isCancelled = order.status === "cancelled";
 
           return (
             <div

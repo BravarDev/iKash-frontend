@@ -61,8 +61,8 @@ function RegisterWaitlistForm() {
             </svg>
           </div>
           <div className="space-y-1">
-            <h3 className="text-xl font-bold text-white">You're on the list!</h3>
-            <p className="text-gray-400 text-sm font-light">We'll notify you as soon as Mainnet goes live.</p>
+            <h3 className="text-xl font-bold text-white">You&apos;re on the list!</h3>
+            <p className="text-gray-400 text-sm font-light">We&apos;ll notify you as soon as Mainnet goes live.</p>
           </div>
         </div>
       ) : (

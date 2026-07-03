@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useEscrows } from "@/features/escrow/hooks/useEscrows";
 import { useOrders } from "@/features/order/hooks/useOrders";
 import { isSignatureCancelled } from "@/features/wallet/application/wallet.service";
@@ -19,15 +19,12 @@ export interface TradeEvidenceUploaderProps {
 }
 
 export function TradeEvidenceUploader({
-    orderId,
     escrowId,
     escrowStatus,
     buyerAddress,
-    amount,
     onStatusChange
 }: TradeEvidenceUploaderProps) {
     const { markFiatSent, syncEscrow } = useEscrows();
-    const { updateOrder } = useOrders();
 
     const [uploadedFile, setUploadedFile] = useState<{ name: string; size: string } | null>(null);
     const [isDragging, setIsDragging] = useState(false);
@@ -85,9 +82,9 @@ export function TradeEvidenceUploader({
                 notify("success", "Payment confirmed and registered successfully!");
                 onStatusChange();
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (isSignatureCancelled(err)) return;
-            alert(`Error processing action: ${err.message || err}`);
+            alert(`Error processing action: ${err instanceof Error ? err.message : String(err)}`);
         } finally {
             setIsSubmitting(false);
         }
@@ -107,9 +104,9 @@ export function TradeEvidenceUploader({
             await syncEscrow({ escrowId, action: "fiat_sent", signedXdr });
             notify("success", "Payment confirmed and registered successfully!");
             onStatusChange();
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (isSignatureCancelled(err)) return;
-            notify("error", `Error: ${err.message || err}`);
+            notify("error", `Error: ${err instanceof Error ? err.message : String(err)}`);
         } finally {
             setIsSubmitting(false);
         }

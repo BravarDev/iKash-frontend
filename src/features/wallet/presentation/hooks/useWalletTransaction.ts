@@ -22,14 +22,12 @@ interface TransactionsState {
 export function useWalletTransactions(publicKey: string | null) {
     const [state, setState] = useState<TransactionsState>({
         transactions: [],
-        isLoading: false,
+        isLoading: true,
         error: null,
     });
 
     useEffect(() => {
         if (!publicKey) return;
-
-        setState({ transactions: [], isLoading: true, error: null });
 
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 

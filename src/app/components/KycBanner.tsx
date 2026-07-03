@@ -37,9 +37,9 @@ export function KycBanner() {
             } else {
                 throw new Error("No verification URL returned");
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("KYC start error:", err);
-            setError(err.message || "Something went wrong starting KYC.");
+            setError(err instanceof Error ? err.message : "Something went wrong starting KYC.");
             setIsLoading(false);
         }
     };
