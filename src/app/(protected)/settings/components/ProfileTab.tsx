@@ -269,7 +269,7 @@ export function ProfileTab() {
                                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                                         <div className="relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-[12px] border border-[#2B3320] bg-[#11151D] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                                             {profileImagePreview && !profileImageHasError ? (
-                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                // eslint-disable-next-line @next/next/no-img-element
                                                 <img
                                                     src={profileImagePreview}
                                                     alt="Profile preview"

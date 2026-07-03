@@ -71,7 +71,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 try {
                     setCurrentUser(JSON.parse(storedUser));
                     return;
-                } catch (e) {
+    } catch {
                     console.error('Error parsing stored user:', e);
                 }
             }

@@ -30,7 +30,7 @@ export function useOffers(filters?: Record<string, string>) {
         } finally {
             setIsLoading(false);
         }
-    }, [accessToken, logout]);
+    }, []);
 
     useEffect(() => {
         fetchOffers(filters);

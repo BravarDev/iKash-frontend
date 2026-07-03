@@ -6,9 +6,7 @@ import usdcIcon from '../../../../../public/usdc.png';
 import { CloseModalProps } from '@/app/utils/closeModalProps';
 import { useOffers } from '@/features/offer/hooks/useOffers';
 import { useUser } from '@/features/user/presentation/context/UserContext';
-import { useRouter } from 'next/navigation';
 import { useWallet, useWalletBalance } from '@/features/wallet';
-import type { PaymentMethodOption } from '@/features/paymentMethod/models/paymentMethod';
 
 export function CreateOfferModal({ onClose }: CloseModalProps) {
     const { currentUser } = useUser();

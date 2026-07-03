@@ -2,7 +2,6 @@
 
 import { useState, useRef } from "react";
 import { useEscrows } from "@/features/escrow/hooks/useEscrows";
-import { useOrders } from "@/features/order/hooks/useOrders";
 import { isSignatureCancelled } from "@/features/wallet/application/wallet.service";
 import { useSignatureCancellation } from "@/features/wallet/hooks/useSignatureCancellation";
 import { Info, Upload, FileUp, CircleCheck, Loader2 } from "lucide-react";
