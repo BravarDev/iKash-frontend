@@ -21,7 +21,7 @@ export function WalletDashboard() {
         const sendParam = searchParams.get("send");
         const walletParam = searchParams.get("wallet");
         if (sendParam === "true" || walletParam) {
-            setIsModalOpen(true);
+            setIsSendModalOpen(true);
         }
     }, [searchParams]);
 
@@ -62,7 +62,7 @@ export function WalletDashboard() {
                         <button
                             className="flex items-center gap-2 bg-[#bced09] hover:bg-[#d4f53a] text-black text-xs font-bold
                             px-5 py-3 rounded-xl tracking-wider transition-all duration-200 hover:scale-105 active:scale-95"
-                            onClick={() => setIsModalOpen(true)}
+                            onClick={() => setIsSendModalOpen(true)}
                         >
                             <svg viewBox="0 0 14 14" className="w-3.5 h-3.5" fill="none">
                                 <path d="M2 12L12 2M12 2H5M12 2v7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -129,7 +129,7 @@ export function WalletDashboard() {
                 </div>
             </div>
 
-            {isSendModalOpen && <SendFundsModal onClose={() => setIsModalOpen(false)} />}
+            {isSendModalOpen && <SendFundsModal onClose={() => setIsSendModalOpen(false)} />}
             {isReceiveModalOpen && <ReceiveFundsModal onClose={() => setIsReceiveModalOpen(false)} />}
         </div>
     );

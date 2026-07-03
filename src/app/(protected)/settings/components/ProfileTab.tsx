@@ -75,14 +75,14 @@ export function ProfileTab() {
 
         try {
             const payload: {
-                username: string;
                 email: string;
                 bio: string;
+                username?: string;
                 alias?: string;
             } = {
-                username,
                 email,
                 bio,
+                username,
             };
 
             if (alias) {
@@ -241,7 +241,7 @@ export function ProfileTab() {
         }
     };
 
-    const initials = (currentUser?.alias || currentUser?.username || currentUser?.publicKey || "IK")
+    const initials = (currentUser?.alias || currentUser?.publicKey || "IK")
         .slice(0, 2)
         .toUpperCase();
 
