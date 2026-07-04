@@ -8,6 +8,7 @@ import { TradeEvidenceUploader } from "../components/TradeEvidenceUploader";
 import { EvidencePreview } from "../components/EvidencePreview";
 import { Chat } from "../../components/Chat";
 import { useUser } from "@/features/user/presentation/context/UserContext";
+import type { Order } from "@/features/order/models/order";
 import { useOrders } from "@/features/order/hooks/useOrders";
 import { ArrowLeft, AlertTriangle, Ban, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -31,10 +32,11 @@ export default function TradePage({ params }: PageProps) {
     const [errorMsg, setErrorMsg] = useState("");
 
     // Create a demo order object when path is /demo or starting with mock-
-    const demoOrder = useMemo(() => {
+    const demoOrder = useMemo((): Order | null => {
         if (!currentUser) return null;
         return {
             orderId: "mock-uuid-1",
+            offerId: "offer-1",
             buyerId: currentUser.userId,
             sellerId: "seller-123",
             assetAmount: "0.05",
@@ -47,20 +49,30 @@ export default function TradePage({ params }: PageProps) {
                 alias: currentUser.alias || "Buyer",
                 publicKey: currentUser.publicKey || "G_BUYER_KEY_MOCK...",
                 kycStatus: currentUser.kycStatus || "approved",
+                notificationsEnabled: false,
+                pendingAccountInfo: false,
+                totalVolume: "0",
+                createdAt: "2026-01-01T00:00:00.000Z",
             },
             seller: {
                 userId: "seller-123",
                 alias: "CryptoKing_99",
                 publicKey: "G_SELLER_KEY_MOCK...",
                 kycStatus: "approved",
+                notificationsEnabled: false,
+                pendingAccountInfo: false,
+                totalVolume: "15000",
+                createdAt: "2026-01-01T00:00:00.000Z",
             },
             offer: {
                 offerId: "offer-1",
+                creatorId: "seller-123",
                 price: "65000",
                 assetCode: "USDC",
                 type: "sell",
                 minAmount: "10",
                 maxAmount: "10000",
+                status: "active",
                 payment_methods: [
                     {
                         payment_id: "pm-1",
@@ -85,7 +97,8 @@ export default function TradePage({ params }: PageProps) {
             },
             escrow: {
                 escrowId: "escrow-mock-1",
-                escrowStatus: "pending",
+                orderId: "mock-uuid-1",
+                escrowStatus: "pending" as const,
                 buyerAddress: currentUser.publicKey || "G_BUYER_KEY_MOCK...",
                 sellerAddress: "G_SELLER_KEY_MOCK...",
                 amount: "0.05",

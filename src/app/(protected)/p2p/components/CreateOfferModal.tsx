@@ -24,7 +24,7 @@ export function CreateOfferModal({ onClose }: CloseModalProps) {
 
     // Obtener balance de USDC del usuario
     const usdcAssetBalance = balances?.find(
-        (b: { asset_code?: string; assetCode?: string; balance: string }) => b.asset_code === 'USDC' || b.assetCode === 'USDC'
+        (b) => b.asset_code === 'USDC'
     );
     const usdcBalance = usdcAssetBalance
         ? parseFloat(usdcAssetBalance.balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -216,7 +216,7 @@ export function CreateOfferModal({ onClose }: CloseModalProps) {
                             <div className="flex flex-col gap-4">
                                 {/* Legacy payment methods */}
                                 {currentUser?.paymentMethods?.map((pm) => {
-                                    const id = pm.paymentId || pm.payment_id || pm.id;
+                                    const id = String(pm.paymentId ?? pm.payment_id ?? pm.id ?? "");
                                     const name = pm.payment_provider?.name || pm.paymentProvider?.name || pm.bankName || pm.type || "Payment Method";
                                     const identifier = pm.accountIdentifier || pm.account_identifier || pm.accountDetails || "";
                                     const owner = pm.beneficiaryName || pm.beneficiary_name || "";
@@ -249,7 +249,7 @@ export function CreateOfferModal({ onClose }: CloseModalProps) {
 
                                 {/* New payment_method (v2) */}
                                 {currentUser?.payment_method?.map((pm) => {
-                                    const id = pm.payment_id || pm.paymentId || pm.id;
+                                    const id = String(pm.payment_id ?? pm.paymentId ?? pm.id ?? "");
                                     const name = pm.payment_provider?.name || pm.paymentProvider?.name || pm.type || "Payment Method";
                                     const identifier = pm.account_identifier || pm.accountIdentifier || pm.accountDetails || "";
                                     const owner = pm.beneficiary_name || pm.beneficiaryName || "";

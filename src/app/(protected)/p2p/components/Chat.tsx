@@ -62,30 +62,6 @@ export const Chat = ({ orderId, chatName = "Merchant Chat" }: ChatProps) => {
         messagesEndRef.current?.scrollIntoView({ behavior });
     }, []);
 
-    // Load initial messages
-    useEffect(() => {
-        if (!currentUser) return;
-
-        if (isDemo) {
-            setMessages(INITIAL_MOCK_MESSAGES(orderId, currentUser.userId));
-            setTimeout(() => scrollToBottom("auto"), 100);
-        } else {
-            // Live sync fetch
-            fetchMessages();
-            
-            // Set up polling loop every 1000ms
-            pollingIntervalRef.current = setInterval(() => {
-                fetchMessages();
-            }, 1000);
-        }
-
-        return () => {
-            if (pollingIntervalRef.current) {
-                clearInterval(pollingIntervalRef.current);
-            }
-        };
-    }, [orderId, currentUser, isDemo, fetchMessages, scrollToBottom]);
-
     // Fetch messages from backend
     const fetchMessages = useCallback(async () => {
         if (!currentUser) return;
@@ -110,6 +86,30 @@ export const Chat = ({ orderId, chatName = "Merchant Chat" }: ChatProps) => {
             console.error("Failed to fetch chat messages:", err);
         }
     }, [currentUser, accessToken, orderId, scrollToBottom]);
+
+    // Load initial messages
+    useEffect(() => {
+        if (!currentUser) return;
+
+        if (isDemo) {
+            setMessages(INITIAL_MOCK_MESSAGES(orderId, currentUser.userId));
+            setTimeout(() => scrollToBottom("auto"), 100);
+        } else {
+            // Live sync fetch
+            fetchMessages();
+            
+            // Set up polling loop every 1000ms
+            pollingIntervalRef.current = setInterval(() => {
+                fetchMessages();
+            }, 1000);
+        }
+
+        return () => {
+            if (pollingIntervalRef.current) {
+                clearInterval(pollingIntervalRef.current);
+            }
+        };
+    }, [orderId, currentUser, isDemo, fetchMessages, scrollToBottom]);
 
     const handleSend = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
