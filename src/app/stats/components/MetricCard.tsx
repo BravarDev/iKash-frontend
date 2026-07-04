@@ -8,7 +8,7 @@ type MetricCardProps = {
 
 export function MetricCard({ icon, badge, label, value, unit }: MetricCardProps) {
     return (
-        <div className="bg-[#0d0d0d] border border-white/10 rounded-xl p-5 flex flex-col justify-between h-40.75 w-100">
+        <div className="bg-[#1A1A1A99] border border-[#FFFFFF0D] rounded-xl p-5 flex flex-col justify-between h-40.75 w-100">
             <div className="flex items-start justify-between">
                 <div className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-lime-400">
                     {icon}

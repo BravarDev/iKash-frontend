@@ -5,6 +5,7 @@ import { Navbar } from "../welcome/components/Navbar";
 import { useStats } from "@/features/stats/hooks/useStats";
 import { MetricCard } from "./components/MetricCard";
 import { ShieldCheck, TrendingUp, UserPlus, Wallet } from "lucide-react";
+import { WaitlistGrowth } from "./components/WaitlistGrowth";
 
 export default function StatsPage() {
     const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
@@ -71,6 +72,9 @@ export default function StatsPage() {
             <div className="flex items-center justify-center mt-10 gap-4">
                 <div className="gap-4 justify-center items-center w-204 h-124.5 bg-[#1A1A1A99] border border-[#FFFFFF0D] rounded-lg">
                     <p className="font-semibold text-xl text-[#E3E2E2] ml-8 mt-5">Waitlist growth</p>
+                    <div className="">
+                        <WaitlistGrowth timeLine={stats?.waitlist_timeline || []} />
+                    </div>
                 </div>
                 <div className="gap-4 justify-center items-center w-100 h-124.5 bg-[#1A1A1A99] border border-[#FFFFFF0D] rounded-lg">
                     <p className="text-[#E3E2E2] font-bold text-[11px] mt-5 ml-8">Live Feed Stats</p>
