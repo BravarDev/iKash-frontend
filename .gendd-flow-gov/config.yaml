@@ -1,0 +1,7 @@
+default_model: default
+models:
+  default:
+    model_provider: vertex
+    vertex_model: gemini-2.5-flash
+    vertex_location: us-central1
+    google_cloud_project: ikash-p2p-application

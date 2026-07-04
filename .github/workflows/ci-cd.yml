@@ -1,0 +1,101 @@
+name: Frontend CI/CD
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+env:
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  SERVICE_NAME: ikash-frontend-dev
+  REGION: us-central1
+  REPO_NAME: ikash-repo
+  REGISTRY_URL: us-central1-docker.pkg.dev
+  WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+  SERVICE_ACCOUNT: ${{ vars.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --no-frozen-lockfile
+
+      - run: pnpm run lint
+
+      - run: pnpm run test
+
+  deploy:
+    name: Build & Deploy to Cloud Run
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --no-frozen-lockfile
+
+      - name: Authenticate Docker with Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGISTRY_URL }} --quiet
+
+      - name: Build Docker image
+        run: |
+          IMAGE="${{ env.REGISTRY_URL }}/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL="${{ secrets.NEXT_PUBLIC_API_URL }}" \
+            --build-arg NEXT_PUBLIC_TRUSTLESS_WORK_API_URL="${{ secrets.NEXT_PUBLIC_TRUSTLESS_WORK_API_URL }}" \
+            --build-arg NEXT_PUBLIC_TRUSTLESS_WORK_API_KEY="${{ secrets.NEXT_PUBLIC_TRUSTLESS_WORK_API_KEY }}" \
+            --build-arg NEXT_PUBLIC_USDC_ISSUER="${{ secrets.NEXT_PUBLIC_USDC_ISSUER }}" \
+            --build-arg NEXT_PUBLIC_STELLAR_NETWORK="${{ secrets.NEXT_PUBLIC_STELLAR_NETWORK }}" \
+            -t $IMAGE .
+          docker tag $IMAGE "${{ env.REGISTRY_URL }}/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:latest"
+          echo "image=$IMAGE" >> $GITHUB_ENV
+
+      - name: Push Docker image
+        run: |
+          docker push "${{ env.REGISTRY_URL }}/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
+          docker push "${{ env.REGISTRY_URL }}/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:latest"
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image "${{ env.REGISTRY_URL }}/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}" \
+            --platform managed \
+            --region ${{ env.REGION }} \
+            --allow-unauthenticated \
+            --timeout 1000 \
+            --memory 2Gi \
+            --cpu 2

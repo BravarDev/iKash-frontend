@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { Order } from "../models/order";
 import { CreateOrder } from "../models/createOrder";
 import { UpdateOrder } from "../models/updateOrder";
@@ -9,8 +9,7 @@ export function useOrders() {
     const [order, setOrder] = useState<Order | null>(null);
     const { accessToken, logout } = useUser();
 
-    // Helper para manejar errores de autenticación
-    const handleResponse = async (res: Response, defaultError: string) => {
+    const handleResponse = useCallback(async (res: Response, defaultError: string) => {
         if (res.status === 401) {
             logout();
             throw new Error("Sesión expirada. Por favor, inicia sesión nuevamente.");
@@ -21,7 +20,7 @@ export function useOrders() {
             throw new Error(msg);
         }
         return res.json();
-    };
+    }, [logout]);
 
     const fetchUserOrders = useCallback(async (userId: string) => {
         try {
@@ -34,7 +33,7 @@ export function useOrders() {
         } catch (err) {
             console.error(err);
         }
-    }, [accessToken]);
+    }, [accessToken, handleResponse]);
 
     const getOrder = async (orderId: string) => {
         try {

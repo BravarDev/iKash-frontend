@@ -44,3 +44,6 @@ next-env.d.ts
 certificates
 
 deploy.dev.ps1
+
+# GenDD Agentic Governance (local CLI config; may contain secrets)
+.gendd-flow-gov/

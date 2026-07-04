@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useWallet } from "@/features/wallet";
 import { useWalletBalance } from "@/features/wallet/presentation/hooks/useWalletBalance";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { SendFundsModal } from "./SendFundsModal";
 import { ReceiveFundsModal } from "./ReceiveFundsModal";
 import { useSearchParams } from "next/navigation";
@@ -12,18 +12,12 @@ export function WalletDashboard() {
     const { publicKey } = useWallet();
     const { balance, balances, isLoading, error } = useWalletBalance(publicKey);
 
-    const [isSendModalOpen, setIsSendModalOpen] = useState(false);
     const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
 
     const searchParams = useSearchParams();
-
-    useEffect(() => {
-        const sendParam = searchParams.get("send");
-        const walletParam = searchParams.get("wallet");
-        if (sendParam === "true" || walletParam) {
-            setIsModalOpen(true);
-        }
-    }, [searchParams]);
+    const sendParam = searchParams.get("send");
+    const walletParam = searchParams.get("wallet");
+    const [isSendModalOpen, setIsSendModalOpen] = useState(sendParam === "true" || !!walletParam);
 
     return (
         <div className="w-full flex flex-col pt-6 px-4 pb-24 md:pt-12 md:pr-8 md:pb-12 md:pl-0 md:border-r md:border-[#1F2937] md:max-w-284">
@@ -62,7 +56,7 @@ export function WalletDashboard() {
                         <button
                             className="flex items-center gap-2 bg-[#bced09] hover:bg-[#d4f53a] text-black text-xs font-bold
                             px-5 py-3 rounded-xl tracking-wider transition-all duration-200 hover:scale-105 active:scale-95"
-                            onClick={() => setIsModalOpen(true)}
+                            onClick={() => setIsSendModalOpen(true)}
                         >
                             <svg viewBox="0 0 14 14" className="w-3.5 h-3.5" fill="none">
                                 <path d="M2 12L12 2M12 2H5M12 2v7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -129,7 +123,7 @@ export function WalletDashboard() {
                 </div>
             </div>
 
-            {isSendModalOpen && <SendFundsModal onClose={() => setIsModalOpen(false)} />}
+            {isSendModalOpen && <SendFundsModal onClose={() => setIsSendModalOpen(false)} />}
             {isReceiveModalOpen && <ReceiveFundsModal onClose={() => setIsReceiveModalOpen(false)} />}
         </div>
     );

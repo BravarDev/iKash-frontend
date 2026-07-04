@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Navbar } from "./components/Navbar";
 import { useWalletContext } from "../../features/wallet/presentation/context/WalletContext";
+import { useRouter } from "next/navigation";
 
 // --- CUSTOM INTERACTIVE PLANET PARTICLES CANVAS (HERO) ---
 function PlanetParticles() {
@@ -122,8 +123,8 @@ function PlanetParticles() {
         const cosTilt = Math.cos(p.tilt);
         const sinTilt = Math.sin(p.tilt);
 
-        let targetX = cx + (baseX * cosTilt - baseY * sinTilt);
-        let targetY = cy + (baseX * sinTilt + baseY * cosTilt);
+        const targetX = cx + (baseX * cosTilt - baseY * sinTilt);
+        const targetY = cy + (baseX * sinTilt + baseY * cosTilt);
 
         const dx = targetX + p.repelX - mouse.x;
         const dy = targetY + p.repelY - mouse.y;
@@ -524,6 +525,7 @@ function ConnectWalletModal({
   onClose: () => void;
 }) {
   const { connect, disconnect, isConnected, provider } = useWalletContext();
+  const router = useRouter();
   const [modalState, setModalState] = useState<
     "select" | "connecting" | "failed"
   >("select");
@@ -556,8 +558,9 @@ function ConnectWalletModal({
     }
     setSelectedWallet(selectedProvider);
     setModalState("connecting");
+    
     try {
-      // 1. Establish wallet connection via context
+      // 1. Establish wallet connection via context (Handles network checks & redirects internally)
       await connect(selectedProvider);
 
       // 2. Network Check (Freighter only)
@@ -567,7 +570,7 @@ function ConnectWalletModal({
         const activeNetStr =
           typeof activeNet === "string"
             ? activeNet
-            : (activeNet as any)?.network || "TESTNET";
+            : (activeNet as Record<string, unknown>)?.network || "TESTNET";
         if (activeNetStr.toUpperCase() !== "TESTNET") {
           throw new Error(
             "Active network is Mainnet. Please switch your wallet configuration to TESTNET.",
@@ -593,10 +596,9 @@ function ConnectWalletModal({
 
       // Success - context handled redirection, close modal
       onClose();
-    } catch (err: any) {
-      setErrorMsg(err?.message || "Connection failed. Please try again.");
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : "Connection failed. Please try again.");
       setModalState("failed");
-    //   disconnect(); // clean session
     }
   };
 
@@ -636,22 +638,33 @@ function ConnectWalletModal({
             <h3 className="text-3xl font-black tracking-tight mb-2 text-white leading-tight">
               Connect Your Wallet
             </h3>
-            <p className="text-gray-400 text-sm leading-relaxed mb-8">
-              Choose your preferred Stellar provider to access the iKa$h
-              ecosystem.
+            <p className="text-gray-400 text-sm leading-relaxed mb-6">
+              Choose your preferred Stellar provider to access the iKa$h ecosystem.
             </p>
 
+            {/* Development Disclaimer Banner */}
+            <div className="mb-6 bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 flex gap-3 text-sm text-blue-200">
+              <svg className="w-6 h-6 flex-shrink-0 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p>
+                <strong>Early Access:</strong> This application is currently in development. Connections are only available via browser extensions and exclusively for <strong>Testnet</strong> accounts.
+              </p>
+            </div>
+
             <div className="space-y-4">
-              {/* Freighter Option */}
+              {/* Join Waitlist Option (Top Priority) */}
               <div
-                onClick={() => handleWalletConnect("freighter")}
-                className="group flex items-center justify-between p-5 bg-[#18181b]/40 border border-white/5 rounded-2xl hover:bg-[#1d1f25] hover:border-[#BCED09] hover:scale-[1.01] transition-all duration-300 cursor-pointer text-left"
+                onClick={() => {
+                  onClose();
+                  router.push("/register");
+                }}
+                className="group flex items-center justify-between p-5 bg-[#BCED09]/10 border border-[#BCED09]/30 rounded-2xl hover:bg-[#BCED09]/20 hover:border-[#BCED09] hover:scale-[1.01] transition-all duration-300 cursor-pointer text-left shadow-[0_0_15px_rgba(188,237,9,0.1)]"
               >
                 <div className="flex items-center gap-4">
-                  {/* Freighter Styled Icon */}
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-tr from-indigo-600 to-indigo-400 shadow-md">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[#BCED09] shadow-md">
                     <svg
-                      className="w-6 h-6 text-white"
+                      className="w-6 h-6 text-[#010308]"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -660,9 +673,47 @@ function ConnectWalletModal({
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        d="M15 7a2 2 0 012 2m0 0a2 2 0 01-2 2m2-2h3a1 1 0 011 1v3a1 1 0 01-1 1h-.3a2 2 0 00-1.8 1.1l-.3.6a2 2 0 01-1.8 1.1H15a3 3 0 11-3-3V9a3 3 0 013-3z"
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
                       />
                     </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-[#BCED09] font-bold text-lg leading-tight group-hover:text-white transition-colors">
+                      Join the Waitlist
+                    </h4>
+                    <p className="text-gray-400 text-xs mt-0.5 font-light">
+                      Get notified for our Mainnet launch
+                    </p>
+                  </div>
+                </div>
+                <svg
+                  className="w-5 h-5 text-[#BCED09] group-hover:text-white transition-colors"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+
+              <div className="relative py-2">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/5"></div>
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-[#0c0e12] px-2 text-gray-500 uppercase tracking-wider">Or connect to Testnet</span>
+                </div>
+              </div>
+
+              {/* Freighter Option */}
+              <div
+                onClick={() => handleWalletConnect("freighter")}
+                className="group flex items-center justify-between p-5 bg-[#18181b]/40 border border-white/5 rounded-2xl hover:bg-[#1d1f25] hover:border-[#BCED09] hover:scale-[1.01] transition-all duration-300 cursor-pointer text-left"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-tr from-indigo-600 to-indigo-400 shadow-md overflow-hidden relative">
+                    <Image src="/freighter-icon.png" alt="Freighter" fill className="object-cover" />
                   </div>
                   <div>
                     <h4 className="text-white font-bold text-lg leading-tight group-hover:text-[#BCED09] transition-colors">
@@ -694,21 +745,8 @@ function ConnectWalletModal({
                 className="group flex items-center justify-between p-5 bg-[#18181b]/40 border border-white/5 rounded-2xl hover:bg-[#1d1f25] hover:border-[#BCED09] hover:scale-[1.01] transition-all duration-300 cursor-pointer text-left"
               >
                 <div className="flex items-center gap-4">
-                  {/* LOBSTR Styled Icon */}
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-tr from-cyan-600 to-sky-400 shadow-md">
-                    <svg
-                      className="w-6 h-6 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
-                      />
-                    </svg>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-tr from-cyan-600 to-sky-400 shadow-md overflow-hidden relative">
+                    <Image src="/lobstr-icon.png" alt="LOBSTR" fill className="object-cover" />
                   </div>
                   <div>
                     <h4 className="text-white font-bold text-lg leading-tight group-hover:text-[#BCED09] transition-colors">
@@ -911,7 +949,7 @@ export default function HomePage() {
               </h3>
               <p className="text-gray-400 group-hover:text-gray-300 text-[15px] font-light leading-relaxed transition-colors duration-300">
                 Real-time tracking and professional financial analytics. Deep
-                insights into your portfolio's performance and market trends.
+                insights into your portfolio&apos;s performance and market trends.
               </p>
             </div>
           </div>
@@ -927,7 +965,7 @@ export default function HomePage() {
               </h3>
               <p className="text-gray-400 group-hover:text-gray-300 text-[15px] font-light leading-relaxed transition-colors duration-300">
                 Specialized money management built specifically for the Stellar
-                network's speed and low transaction costs.
+                network&apos;s speed and low transaction costs.
               </p>
             </div>
           </div>

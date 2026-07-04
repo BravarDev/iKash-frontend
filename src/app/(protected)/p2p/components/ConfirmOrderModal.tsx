@@ -11,12 +11,19 @@ import { useSignatureCancellation } from "@/features/wallet/hooks/useSignatureCa
 import { useWalletBalance } from "@/features/wallet/presentation/hooks/useWalletBalance";
 import { useRouter } from "next/navigation";
 import { useNotification } from "../../../components/NotificationContext";
+import { PaymentMethodOption } from "@/features/paymentMethod/models/paymentMethod";
 import { SignatureCancelledModal } from "./SignatureCancelledModal";
 
 interface ConfirmOrderModalProps {
     offer: Offer;
     creator: Users;
     onClose: () => void;
+}
+
+interface OrderCreateResponse {
+    orderId: string;
+    unsignedFundTransaction?: string | null;
+    escrow?: { escrowId: string } | null;
 }
 
 export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModalProps) {
@@ -73,12 +80,12 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
 
     // Intersect Payment Methods
     const intersectingMethods = useMemo(() => {
-        const creatorMethods: any[] = [
+        const creatorMethods: PaymentMethodOption[] = [
             ...(offer.payment_methods || []),
             ...(offer.paymentMethods || [])
         ];
 
-        const userMethods: any[] = [
+        const userMethods: PaymentMethodOption[] = [
             ...(currentUser?.payment_method || []),
             ...(currentUser?.paymentMethods || [])
         ];
@@ -113,7 +120,7 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
         if (intersectingMethods.length > 0 && !selectedPaymentId) {
             setSelectedPaymentId(intersectingMethods[0].id);
         }
-    }, [intersectingMethods]);
+    }, [intersectingMethods, selectedPaymentId]);
 
     const selectedMethodObj = useMemo(() => {
         return intersectingMethods.find(m => m.id === selectedPaymentId) || intersectingMethods[0];
@@ -179,7 +186,7 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
             // Single unified call — backend deploys escrow on TW first,
             // then persists Order + EscrowOnChain atomically.
             // If escrow deployment fails, no DB record is created.
-            const orderData: any = await createOrder({
+            const orderData: OrderCreateResponse = await createOrder({
                 offerId: offer.offerId,
                 buyerId: isBuyOperation ? currentUser.userId : offer.creatorId,
                 sellerId: isBuyOperation ? offer.creatorId : currentUser.userId,
@@ -231,9 +238,9 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
             notify("success", "Order initiated and escrow contract created. The seller has been notified to fund the escrow.");
             router.push("/p2p/orders/" + orderData.orderId.replace(/-/g, ""));
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
-            const msg = err?.message || "Error initiating order. Please try again.";
+            const msg = err instanceof Error ? err.message : "Error initiating order. Please try again.";
             notify("error", msg);
         } finally {
             setIsSubmitting(false);
