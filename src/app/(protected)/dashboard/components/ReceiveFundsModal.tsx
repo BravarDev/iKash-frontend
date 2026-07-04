@@ -2,19 +2,19 @@ import { CloseModalProps } from "@/app/utils/closeModalProps";
 import { useWallet } from "@/features/wallet";
 import { useUser } from "@/features/user/presentation/context/UserContext";
 import { QRCodeSVG } from "qrcode.react";
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 
 export function ReceiveFundsModal({ onClose }: CloseModalProps) {
     const { publicKey } = useWallet();
     const { currentUser } = useUser();
     
-    const [qrUrl, setQrUrl] = useState("");
     const [copiedType, setCopiedType] = useState("");
 
-    useEffect(() => {
+    const qrUrl = useMemo(() => {
         if (typeof window !== "undefined" && publicKey) {
-            setQrUrl(`${window.location.origin}/send?wallet=${publicKey}`);
+            return `${window.location.origin}/send?wallet=${publicKey}`;
         }
+        return "";
     }, [publicKey]);
 
     const handleCopy = (text: string, type: string) => {

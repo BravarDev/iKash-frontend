@@ -9,14 +9,13 @@ import { Aside } from "../../components/Aside";
 export default function TransactionsPage() {
     const { currentUser } = useUser();
     const { orders, fetchUserOrders } = useOrders();
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const router = useRouter();
 
     useEffect(() => {
         if (!currentUser?.userId) return;
-        setLoading(true);
         fetchUserOrders(currentUser.userId).finally(() => setLoading(false));
-    }, [currentUser?.userId]);
+    }, [currentUser?.userId, fetchUserOrders]);
 
     return (
         <div className="flex min-h-screen w-full bg-[#010308]">

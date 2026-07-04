@@ -21,14 +21,12 @@ export function useWalletBalance(publicKey: string | null) {
   const [state, setState] = useState<BalanceState>({
     balance: null,
     balances: [],
-    isLoading: false,
+    isLoading: true,
     error: null,
   });
 
   useEffect(() => {
     if (!publicKey) return;
-
-    setState({ balance: null, balances: [], isLoading: true, error: null });
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 

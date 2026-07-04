@@ -60,29 +60,30 @@ export function UserProvider({ children }: { children: ReactNode }) {
     // Optional: Load user from localStorage or similar if needed
     useEffect(() => {
         const storedToken = localStorage.getItem('ikash_token');
-        if (storedToken) {
-            if (isTokenExpired(storedToken)) {
-                logout();
-                return;
-            }
-            setAccessToken(storedToken);
-        }
-
         const storedUser = localStorage.getItem('ikash_user');
-        if (storedUser) {
-            try {
-                setCurrentUser(JSON.parse(storedUser));
-                return;
-            } catch (e) {
-                console.error('Error parsing stored user:', e);
-            }
-        }
 
-        if (mockProfileUploadEnabled) {
-            setCurrentUser(MOCK_USER);
-            localStorage.setItem('ikash_user', JSON.stringify(MOCK_USER));
-        }
-    }, [logout]);
+        const timer = setTimeout(() => {
+            if (storedToken && !isTokenExpired(storedToken)) {
+                setAccessToken(storedToken);
+            }
+
+            if (storedUser && storedToken && !isTokenExpired(storedToken)) {
+                try {
+                    setCurrentUser(JSON.parse(storedUser));
+                    return;
+    } catch {
+                    console.error('Error parsing stored user:', e);
+                }
+            }
+
+            if (mockProfileUploadEnabled) {
+                setCurrentUser(MOCK_USER);
+                localStorage.setItem('ikash_user', JSON.stringify(MOCK_USER));
+            }
+        }, 0);
+
+        return () => clearTimeout(timer);
+    }, []);
 
     // Periodically check for token expiration
     useEffect(() => {

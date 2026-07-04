@@ -76,7 +76,7 @@ export default function PlatformFeaturesPage() {
             ) : (
               <div className="space-y-2 text-gray-400 text-xs font-light leading-relaxed">
                 <p>
-                  iKash's Peer-to-Peer (P2P) Marketplace acts as an open notice board of buy and sell offers. Users can create customized offers, defining their pricing, min/max transaction limits, and preferred local payment systems (e.g. Bank Transfer, SINPE Móvil).
+                  iKash&apos;s Peer-to-Peer (P2P) Marketplace acts as an open notice board of buy and sell offers. Users can create customized offers, defining their pricing, min/max transaction limits, and preferred local payment systems (e.g. Bank Transfer, SINPE Móvil).
                 </p>
                 <p>
                   Since there is no centralized brokerage or third-party balance account, fiat transactions are settled directly between users. The marketplace orchestrates these settlements by securing the corresponding crypto assets on the Stellar blockchain, ensuring neither party is exposed to counterparty risk.
@@ -100,7 +100,7 @@ export default function PlatformFeaturesPage() {
             ) : (
               <div className="space-y-2 text-gray-400 text-xs font-light leading-relaxed">
                 <p>
-                  Stellar Smart Escrows rely on multi-signature logic and milestone states managed through Trustless Work's blockchain protocols. When a trade is accepted, the contract is initialized with specific on-chain roles:
+                  Stellar Smart Escrows rely on multi-signature logic and milestone states managed through Trustless Work&apos;s blockchain protocols. When a trade is accepted, the contract is initialized with specific on-chain roles:
                 </p>
                 <ul className="list-disc list-inside space-y-1 ml-2 text-gray-400 font-light">
                   <li><strong>Seller</strong>: Retains the signing key to authorize release after receiving fiat.</li>
@@ -129,10 +129,10 @@ export default function PlatformFeaturesPage() {
             ) : (
               <div className="space-y-2 text-gray-400 text-xs font-light leading-relaxed">
                 <p>
-                  After making a local bank transfer, the buyer uploads a receipt screenshot. iKash logs this event, updating the local database state to "fiat_sent" and notifying the seller in real-time.
+                  After making a local bank transfer, the buyer uploads a receipt screenshot. iKash logs this event, updating the local database state to &quot;fiat_sent&quot; and notifying the seller in real-time.
                 </p>
                 <p>
-                  This receipt serves as the primary evidence if a dispute arises. The support team can match the receipt's metadata (time, transaction code, beneficiary name) against bank registries to resolve the dispute impartially. In a regular trade, this upload unlocks the seller's ability to trigger the on-chain release transaction.
+                  This receipt serves as the primary evidence if a dispute arises. The support team can match the receipt&apos;s metadata (time, transaction code, beneficiary name) against bank registries to resolve the dispute impartially. In a regular trade, this upload unlocks the seller&apos;s ability to trigger the on-chain release transaction.
                 </p>
               </div>
             )}

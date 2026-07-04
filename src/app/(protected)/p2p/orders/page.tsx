@@ -1,14 +1,13 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Aside } from "@/app/components/Aside";
 import { Header } from "@/app/components/Header";
 import { OrderNavbar } from "../components/OrderNavbar";
 import { useUser } from "@/features/user/presentation/context/UserContext";
 import { useOrders } from "@/features/order/hooks/useOrders";
-import { Order } from "@/features/order/models/order";
-import { ChevronRight, Calendar, Search, ArrowRight, ShoppingCart, TrendingUp, DollarSign } from "lucide-react";
+import { ChevronRight, Calendar, ShoppingCart, TrendingUp } from "lucide-react";
 
 // Predefined mock data matching the exact ones in the images for high fidelity
 const MOCK_ORDERS = [
@@ -86,7 +85,7 @@ export default function OrdersPage() {
 
   // Combine real orders with mock orders to ensure high fidelity mockup matches image.png
   const combinedOrders = useMemo(() => {
-    const formattedReal = (realOrders || []).map((o: any) => {
+    const formattedReal = (realOrders || []).map((o: Order) => {
       const isBuy = o.buyerId === currentUser?.userId;
       const formattedDate = o.createdAt 
         ? new Date(o.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase()

@@ -9,7 +9,6 @@ import { EvidencePreview } from "../components/EvidencePreview";
 import { Chat } from "../../components/Chat";
 import { useUser } from "@/features/user/presentation/context/UserContext";
 import { useOrders } from "@/features/order/hooks/useOrders";
-import { Order } from "@/features/order/models/order";
 import { ArrowLeft, AlertTriangle, Ban, Loader2 } from "lucide-react";
 import Link from "next/link";
 
@@ -27,7 +26,7 @@ export default function TradePage({ params }: PageProps) {
     const { currentUser } = useUser();
     const { getOrder } = useOrders();
 
-    const [order, setOrder] = useState<any | null>(null);
+    const [order, setOrder] = useState<Order | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMsg, setErrorMsg] = useState("");
 
@@ -109,7 +108,7 @@ export default function TradePage({ params }: PageProps) {
             } else {
                 setOrder(data);
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Error fetching order:", err);
             setErrorMsg("Error loading order details");
         } finally {
@@ -352,7 +351,7 @@ export default function TradePage({ params }: PageProps) {
                                             </span>
                                         </div>
                                         <p className="text-[#C2C7D0] text-[14px] font-space">
-                                            Ensure the buyer's name on the bank transfer matches their verified profile name (
+                                             Ensure the buyer&apos;s name on the bank transfer matches their verified profile name (
                                             <span className="font-bold text-white">{order.buyer?.alias || "Buyer"}</span>
                                             ). Third-party payments are against our terms of service.
                                         </p>

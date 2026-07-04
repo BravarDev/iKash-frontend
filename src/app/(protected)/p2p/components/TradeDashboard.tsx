@@ -30,13 +30,12 @@ function MerchantBalance({ publicKey, assetCode }: { publicKey?: string; assetCo
 
 export function TradeDashboard() {
     const [tab, setTab] = useState("Buy");
-    const [amount, setAmount] = useState("");
     const [isOpen, setIsOpen] = useState(false);
     const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
 
     // If user wants to "Buy", they need to see offers where the merchant is "selling".
     // If user wants to "Sell", they need to see offers where the merchant is "buying".
-    const { offers, isLoading } = useOffers({ type: tab === "Buy" ? "sell" : "buy" });
+    const { offers } = useOffers({ type: tab === "Buy" ? "sell" : "buy" });
     // Filter out offers that have been executed/archived server-side
     const visibleOffers = offers.filter(o => !o.executed);
 
@@ -51,7 +50,7 @@ export function TradeDashboard() {
                 getUser(offer.creatorId);
             }
         });
-    }, [offers]);
+    }, [offers, getUser]);
 
     return (
         <div className="w-full flex flex-col pt-8 pb-12 px-1">

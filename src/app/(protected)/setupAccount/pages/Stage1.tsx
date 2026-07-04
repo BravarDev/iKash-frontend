@@ -18,10 +18,7 @@ export default function Stage1({ onNext }: Stage1Props) {
     const { checkAliasAvailable } = useUsers();
 
     useEffect(() => {
-        if (!alias) {
-            setIsAvailable(null);
-            return;
-        }
+        if (!alias) return;
 
         const timer = setTimeout(async () => {
             const { available } = await checkAliasAvailable(alias);

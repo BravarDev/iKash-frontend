@@ -37,7 +37,7 @@ export default function SetupAccount() {
 
     const handleSkip = async () => {
         if (currentUser) {
-            const updated = await setupAccount(currentUser.userId, { pendingAccountInfo: false } as any);
+            const updated = await setupAccount(currentUser.userId, { ...({ pendingAccountInfo: false } as Record<string, unknown>) });
             if (updated) {
                 setCurrentUser(updated);
                 router.push('/dashboard');
@@ -62,7 +62,7 @@ export default function SetupAccount() {
                         onClick={handleSkip}
                         className="text-[#94A3B8] text-sm hover:text-[#F1F5F9] transition-colors mt-2"
                     >
-                        Skip for now, I'll do this later
+                        Skip for now, I&apos;ll do this later
                     </button>
                 </div>
             </div>

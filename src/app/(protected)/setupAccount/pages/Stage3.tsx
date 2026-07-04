@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import preferencesIcon from '../../../../../public/preferences-icon.svg'
 import arrow from '../../../../../public/down-arrow.svg'
@@ -27,12 +27,6 @@ export default function Stage3({ onFinish }: Stage3Props) {
     const filteredProviders = useMemo(() => {
         return providers.filter(p => p.type === selectedType);
     }, [providers, selectedType]);
-
-    // Reset provider if type changes
-    useEffect(() => {
-        setSelectedProvider(null);
-        setDynamicFields({});
-    }, [selectedType]);
 
     const handleFieldChange = (field: string, value: string) => {
         setDynamicFields(prev => ({ ...prev, [field]: value }));
@@ -78,7 +72,11 @@ export default function Stage3({ onFinish }: Stage3Props) {
                             <button
                                 key={type}
                                 type="button"
-                                onClick={() => setSelectedType(type)}
+                                                onClick={() => {
+                                                    setSelectedType(type);
+                                                    setSelectedProvider(null);
+                                                    setDynamicFields({});
+                                                }}
                                 className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
                                     selectedType === type 
                                     ? 'bg-[#BCED09] text-[#12141A]' 

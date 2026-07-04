@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Offer } from "../models/offer";
 import { CreateOffer } from "../models/createOffer";
 import { UpdateOffer } from "../models/updateOffer";
@@ -10,7 +10,7 @@ export function useOffers(filters?: Record<string, string>) {
     const [isLoading, setIsLoading] = useState(true);
     const { accessToken, logout } = useUser();
 
-    const fetchOffers = async (currentFilters?: Record<string, string>) => {
+    const fetchOffers = useCallback(async (currentFilters?: Record<string, string>) => {
         setIsLoading(true);
         try {
             let url = `${process.env.NEXT_PUBLIC_API_URL}/offers`;
@@ -30,11 +30,11 @@ export function useOffers(filters?: Record<string, string>) {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchOffers(filters);
-    }, [JSON.stringify(filters)]);
+    }, [filters, fetchOffers]);
 
     const getOffer = async (offerId: string) => {
         try {

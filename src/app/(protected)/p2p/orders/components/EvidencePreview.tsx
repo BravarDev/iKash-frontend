@@ -5,7 +5,7 @@ import { useEscrows } from "@/features/escrow/hooks/useEscrows";
 import { useOrders } from "@/features/order/hooks/useOrders";
 import { isSignatureCancelled } from "@/features/wallet/application/wallet.service";
 import { useSignatureCancellation } from "@/features/wallet/hooks/useSignatureCancellation";
-import { Info, CircleCheck, Loader2, Eye } from "lucide-react";
+import { CircleCheck, Loader2, Eye } from "lucide-react";
 import { SignatureCancelledModal } from "../../components/SignatureCancelledModal";
 import { useNotification } from "../../../../components/NotificationContext";
 
@@ -78,12 +78,12 @@ export function EvidencePreview({
             await updateOrder({ orderStatus: "locked" }, orderId);
             notify("success", "Escrow funded successfully on-chain!");
             onStatusChange();
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (isSignatureCancelled(err)) {
                 setPendingAction("fund");
                 return;
             }
-            alert(`Error: ${err.message || err}`);
+            alert(`Error: ${err instanceof Error ? err.message : String(err)}`);
         } finally {
             setIsSubmitting(false);
         }
@@ -103,12 +103,12 @@ export function EvidencePreview({
             
             notify("success", "Crypto released successfully!");
             onStatusChange();
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (isSignatureCancelled(err)) {
                 setPendingAction("release");
                 return;
             }
-            alert(`Error releasing crypto: ${err.message || err}`);
+            alert(`Error releasing crypto: ${err instanceof Error ? err.message : String(err)}`);
         } finally {
             setIsSubmitting(false);
         }
@@ -136,11 +136,11 @@ export function EvidencePreview({
             }
             setPendingAction(null);
             onStatusChange();
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (isSignatureCancelled(err)) {
                 return;
             }
-            alert(`Error: ${err.message || err}`);
+            alert(`Error: ${err instanceof Error ? err.message : String(err)}`);
             setPendingAction(null);
         } finally {
             setIsSubmitting(false);
@@ -150,22 +150,6 @@ export function EvidencePreview({
     const handleSignatureCancel = () => {
         sig.cancel();
         setPendingAction(null);
-    };
-
-    const renderStatusDescription = () => {
-        switch (escrowStatus) {
-            case "pending":
-            case "initialized":
-                return "You must fund the Escrow contract to lock the crypto so the buyer can proceed.";
-            case "funded":
-                return "The buyer is currently transferring fiat funds. You will be notified when marked as paid.";
-            case "fiat_sent":
-                return "The buyer has marked the payment as sent! Please verify the funds are cleared in your bank account before releasing the crypto.";
-            case "released":
-                return "The transaction has been successfully completed. The cryptocurrency has been released to the buyer.";
-            default:
-                return "Transaction in progress.";
-        }
     };
 
     const isUnfunded = escrowStatus === "pending" || escrowStatus === "initialized";

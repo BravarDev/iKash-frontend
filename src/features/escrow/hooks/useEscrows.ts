@@ -35,7 +35,7 @@ export interface ReleaseEscrowParams {
 export function useEscrows() {
     const { accessToken, logout } = useUser();
 
-    const handleResponse = async (res: Response, defaultMsg: string) => {
+    const handleResponse = useCallback(async (res: Response, defaultMsg: string) => {
         if (res.status === 401) {
             logout();
             throw new Error("Sesión expirada. Por favor, inicia sesión nuevamente.");
@@ -46,7 +46,7 @@ export function useEscrows() {
             throw new Error(msg);
         }
         return res.json();
-    };
+    }, [logout]);
 
     const openEscrow = useCallback(async (params: OpenEscrowParams) => {
         const headers: Record<string, string> = { "Content-type": "application/json" };
@@ -58,7 +58,7 @@ export function useEscrows() {
             body: JSON.stringify(params),
         });
         return await handleResponse(res, "Error al abrir el contrato de escrow");
-    }, [accessToken]);
+    }, [accessToken, handleResponse]);
 
     const fundEscrow = useCallback(async (params: FundEscrowParams) => {
         const headers: Record<string, string> = { "Content-type": "application/json" };
@@ -70,7 +70,7 @@ export function useEscrows() {
             body: JSON.stringify(params),
         });
         return await handleResponse(res, "Error al preparar la transacción de fondeo");
-    }, [accessToken]);
+    }, [accessToken, handleResponse]);
 
     const syncEscrow = useCallback(async (params: SyncEscrowParams) => {
         const headers: Record<string, string> = { "Content-type": "application/json" };
@@ -82,7 +82,7 @@ export function useEscrows() {
             body: JSON.stringify(params),
         });
         return await handleResponse(res, "Error al sincronizar la transacción en blockchain");
-    }, [accessToken]);
+    }, [accessToken, handleResponse]);
 
     const markFiatSent = useCallback(async (escrowId: string, params: FiatSentParams) => {
         const headers: Record<string, string> = { "Content-type": "application/json" };
@@ -94,7 +94,7 @@ export function useEscrows() {
             body: JSON.stringify(params),
         });
         return await handleResponse(res, "Error al confirmar el envío de pago");
-    }, [accessToken]);
+    }, [accessToken, handleResponse]);
 
     const releaseEscrow = useCallback(async (params: ReleaseEscrowParams) => {
         const headers: Record<string, string> = { "Content-type": "application/json" };
@@ -106,7 +106,7 @@ export function useEscrows() {
             body: JSON.stringify(params),
         });
         return await handleResponse(res, "Error al liberar los fondos del escrow");
-    }, [accessToken]);
+    }, [accessToken, handleResponse]);
 
     return { openEscrow, fundEscrow, syncEscrow, markFiatSent, releaseEscrow };
 }

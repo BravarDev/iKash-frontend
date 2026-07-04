@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { User, MoreVertical, SendHorizontal, Paperclip, Loader2 } from "lucide-react";
+import { User, MoreVertical, SendHorizontal, Paperclip } from "lucide-react";
 import { useUser } from "@/features/user/presentation/context/UserContext";
 
 type ChatProps = {
@@ -84,10 +84,10 @@ export const Chat = ({ orderId, chatName = "Merchant Chat" }: ChatProps) => {
                 clearInterval(pollingIntervalRef.current);
             }
         };
-    }, [orderId, currentUser, isDemo]);
+    }, [orderId, currentUser, isDemo, fetchMessages, scrollToBottom]);
 
     // Fetch messages from backend
-    const fetchMessages = async () => {
+    const fetchMessages = useCallback(async () => {
         if (!currentUser) return;
         try {
             const headers: Record<string, string> = {};
@@ -109,7 +109,7 @@ export const Chat = ({ orderId, chatName = "Merchant Chat" }: ChatProps) => {
         } catch (err) {
             console.error("Failed to fetch chat messages:", err);
         }
-    };
+    }, [currentUser, accessToken, orderId, scrollToBottom]);
 
     const handleSend = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();

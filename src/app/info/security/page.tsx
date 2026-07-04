@@ -51,7 +51,7 @@ export default function PlatformSecurityPage() {
         <div className="space-y-1">
           <h4 className="font-bold text-sm text-white">Audited & Non-Custodial</h4>
           <p className="text-gray-400 text-xs font-light leading-relaxed">
-            iKash's smart contracts are powered by Trustless Work protocols, which have undergone rigorous security audits. Your funds are secured by the decentralized Stellar ledger.
+            iKash&apos;s smart contracts are powered by Trustless Work protocols, which have undergone rigorous security audits. Your funds are secured by the decentralized Stellar ledger.
           </p>
         </div>
       </div>
@@ -71,7 +71,7 @@ export default function PlatformSecurityPage() {
           ) : (
             <div className="space-y-2 text-gray-400 text-xs font-light leading-relaxed">
               <p>
-                In a typical centralized exchange, users deposit assets into the exchange's wallets. This exposes users to platform insolvencies, internal fraud, or security breaches.
+                In a typical centralized exchange, users deposit assets into the exchange&apos;s wallets. This exposes users to platform insolvencies, internal fraud, or security breaches.
               </p>
               <p>
                 iKash implements a **Zero-Custody model**. When you connect your wallet, all operations are authenticated and signed directly on your device. The frontend builds a transaction envelope (XDR), which your browser extension signs. This signature is broadcasted to the decentralized Stellar network. Our servers only record and display on-chain events, guaranteeing you retain full control over your assets.
@@ -96,7 +96,7 @@ export default function PlatformSecurityPage() {
                 To maintain a safe, fraud-free peer-to-peer ecosystem, iKash mandates KYC verification for traders. However, storing identity documents creates a massive security liability.
               </p>
               <p>
-                iKash solves this by integrating **Didit**, a decentralized identity and verification platform. The verification process runs entirely in Didit's secure sandbox. After completion, Didit sends a cryptographic token indicating a status update (Approved or Rejected). iKash only stores this status flag (`kycStatus`). Your raw biometric data, documents, and private details never touch iKash servers, protecting you against leaks and identity theft.
+                iKash solves this by integrating **Didit**, a decentralized identity and verification platform. The verification process runs entirely in Didit&apos;s secure sandbox. After completion, Didit sends a cryptographic token indicating a status update (Approved or Rejected). iKash only stores this status flag (`kycStatus`). Your raw biometric data, documents, and private details never touch iKash servers, protecting you against leaks and identity theft.
               </p>
             </div>
           )}
@@ -110,12 +110,12 @@ export default function PlatformSecurityPage() {
           </div>
           {!isDetailed ? (
             <p className="text-gray-400 text-xs font-light leading-relaxed">
-              Escrows are deployed using audited smart contracts on Stellar. Trustless Work's multi-release system prevents unilateral withdrawals. Support mediation keys serve only to resolve disputed trades based on proof.
+              Escrows are deployed using audited smart contracts on Stellar. Trustless Work&apos;s multi-release system prevents unilateral withdrawals. Support mediation keys serve only to resolve disputed trades based on proof.
             </p>
           ) : (
             <div className="space-y-2 text-gray-400 text-xs font-light leading-relaxed">
               <p>
-                iKash's smart escrow contracts are powered by **Trustless Work**, a developer platform that deploys audited milestone and multi-release Soroban contracts on the Stellar network.
+                iKash&apos;s smart escrow contracts are powered by **Trustless Work**, a developer platform that deploys audited milestone and multi-release Soroban contracts on the Stellar network.
               </p>
               <p>
                 The contract code is public, open-source, and immutable on-chain. When a buyer funds an escrow, the contract guarantees that:
@@ -141,7 +141,7 @@ export default function PlatformSecurityPage() {
           <ul className="list-disc list-inside text-gray-400 text-xs font-light space-y-1 leading-normal">
             <li>Never share your wallet seed phrase or private keys with anyone, including iKash staff.</li>
             <li>Double-check bank beneficiary names and transfer amounts before finalizing a bank transfer.</li>
-            <li>Always upload the bank confirmation receipt directly in the order chat. Do not trade outside iKash's escrow system.</li>
+            <li>Always upload the bank confirmation receipt directly in the order chat. Do not trade outside iKash&apos;s escrow system.</li>
           </ul>
         </div>
       </div>

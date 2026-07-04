@@ -65,7 +65,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             }
         });
         return () => { cancelled = true; };
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, []);
 
     const connect = useCallback(async (provider: WalletProvider) => {
         setState((s) => ({ ...s, isLoading: true, error: null }));
@@ -78,13 +78,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
                 try {
                     const { getNetwork } = await import("@stellar/freighter-api");
                     const activeNet = await getNetwork();
-                    const activeNetStr = typeof activeNet === "string" ? activeNet : (activeNet as any)?.network || "TESTNET";
+                    const activeNetStr = typeof activeNet === "string" ? activeNet : (activeNet as Record<string, unknown>)?.network || "TESTNET";
                     if (activeNetStr.toUpperCase() !== "TESTNET") {
                         throw new Error("Active network is Mainnet. Please switch your wallet configuration to TESTNET.");
                     }
-                } catch (e: any) {
+                } catch (e: unknown) {
                     // Ignore missing freighter errors here, handled by walletService
-                    if (e.message && e.message.includes("Mainnet")) {
+                    if (e instanceof Error && e.message.includes("Mainnet")) {
                         throw e;
                     }
                 }
