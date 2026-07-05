@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Users } from "../models/users";
 import { CreateUser } from "../models/createUser";
 import { SetupAccountPayload } from "../models/setupAccount";
@@ -25,7 +25,7 @@ export function useUsers() {
             .catch(err => console.error(err));
     }, []);
 
-    const getUser = async (userId: string) => {
+    const getUser = useCallback(async (userId: string) => {
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`)
             if (!res.ok) throw new Error('User not found');
@@ -34,7 +34,7 @@ export function useUsers() {
         } catch (error) {
             console.error(error)
         }
-    }
+    }, [])
 
     const createUser = async (user: CreateUser) => {
         try {
