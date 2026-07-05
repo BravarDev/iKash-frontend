@@ -102,6 +102,7 @@ export default function TradePage({ params }: PageProps) {
                 buyerAddress: currentUser.publicKey || "G_BUYER_KEY_MOCK...",
                 sellerAddress: "G_SELLER_KEY_MOCK...",
                 amount: "0.05",
+                evidenceUrl: null,
             }
         };
     }, [currentUser]);
@@ -299,6 +300,7 @@ export default function TradePage({ params }: PageProps) {
                                                 escrowStatus={escrowStatus}
                                                 buyerAddress={buyerAddress}
                                                 amount={amountVal}
+                                                evidenceUrl={order.escrow?.evidenceUrl}
                                                 onStatusChange={fetchOrder}
                                             />
                                         </div>
@@ -353,6 +355,7 @@ export default function TradePage({ params }: PageProps) {
                                             sellerAddress={sellerAddress}
                                             amount={amountVal}
                                             expiresAt={order.expiresAt as string | undefined}
+                                            evidenceUrl={order.escrow?.evidenceUrl}
                                             onStatusChange={fetchOrder}
                                         />
                                     </div>
