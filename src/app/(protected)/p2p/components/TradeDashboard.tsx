@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CreateOfferModal } from "./CreateOfferModal";
 import { ConfirmOrderModal } from "./ConfirmOrderModal";
 import { useOffers } from "@/features/offer/hooks/useOffers";
@@ -33,9 +33,9 @@ export function TradeDashboard() {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
 
-    // If user wants to "Buy", they need to see offers where the merchant is "selling".
-    // If user wants to "Sell", they need to see offers where the merchant is "buying".
-    const { offers } = useOffers({ type: tab === "Buy" ? "sell" : "buy" });
+    const filters = useMemo(() => ({ type: tab === "Buy" ? "sell" : "buy" }), [tab]);
+
+    const { offers } = useOffers(filters);
     // Filter out offers that have been executed/archived server-side
     const visibleOffers = offers.filter(o => !o.executed);
 
