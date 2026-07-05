@@ -7,6 +7,7 @@ import { useUser } from "@/features/user/presentation/context/UserContext";
 type ChatProps = {
     orderId: string;
     chatName?: string;
+    counterpartyProfileImageUrl?: string;
 };
 
 interface Message {
@@ -46,7 +47,7 @@ const INITIAL_MOCK_MESSAGES = (orderId: string, currentUserId: string): Message[
     }
 ];
 
-export const Chat = ({ orderId, chatName = "Merchant Chat" }: ChatProps) => {
+export const Chat = ({ orderId, chatName = "Merchant Chat", counterpartyProfileImageUrl }: ChatProps) => {
     const { currentUser, accessToken } = useUser();
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputText, setInputText] = useState("");
@@ -187,8 +188,12 @@ export const Chat = ({ orderId, chatName = "Merchant Chat" }: ChatProps) => {
             {/* Header */}
             <header className="h-[64px] border-b border-[rgba(69,73,50,0.1)] px-[24px] flex items-center justify-between shrink-0 bg-[#1B1B21]">
                 <div className="flex items-center gap-3">
-                    <div className="relative w-8 h-8 bg-[#35343A] rounded-full flex items-center justify-center border border-white/[0.04] shrink-0">
-                        <User className="w-4 h-4 text-white" />
+                    <div className="relative w-8 h-8 bg-[#35343A] rounded-full flex items-center justify-center border border-white/[0.04] shrink-0 overflow-hidden">
+                        {counterpartyProfileImageUrl ? (
+                            <img src={counterpartyProfileImageUrl} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                            <User className="w-4 h-4 text-white" />
+                        )}
                         <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-[#DAFF00] border border-[#1B1B21]" />
                     </div>
                     <div className="flex flex-col">

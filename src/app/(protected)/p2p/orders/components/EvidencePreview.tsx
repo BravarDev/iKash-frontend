@@ -5,7 +5,7 @@ import { useEscrows } from "@/features/escrow/hooks/useEscrows";
 import { useOrders } from "@/features/order/hooks/useOrders";
 import { isSignatureCancelled } from "@/features/wallet/application/wallet.service";
 import { useSignatureCancellation } from "@/features/wallet/hooks/useSignatureCancellation";
-import { CircleCheck, Loader2, Eye } from "lucide-react";
+import { CircleCheck, Loader2, Eye, Search } from "lucide-react";
 import { SignatureCancelledModal } from "../../components/SignatureCancelledModal";
 import { useNotification } from "../../../../components/NotificationContext";
 
@@ -16,6 +16,7 @@ export interface EvidencePreviewProps {
     sellerAddress?: string | null;
     amount: number;
     expiresAt?: string;
+    evidenceUrl?: string | null;
     onStatusChange: () => void;
 }
 
@@ -26,6 +27,7 @@ export function EvidencePreview({
     sellerAddress,
     amount,
     expiresAt,
+    evidenceUrl,
     onStatusChange
 }: EvidencePreviewProps) {
     const { fundEscrow, releaseEscrow, syncEscrow } = useEscrows();
@@ -200,26 +202,91 @@ export function EvidencePreview({
                     </div>
                 )}
 
-                {hasEvidence && (
-                    <div className="w-full h-full flex flex-col gap-4">
-                        <button 
-                            type="button" 
-                            onClick={() => alert("Opening receipt canvas container...")}
-                            className="bg-[#1F1F25] border border-white/[0.04] w-full h-[48px] text-[#DAFF00] font-bold text-[16px] leading-[24px] rounded-[12px] uppercase flex items-center justify-center gap-2 tracking-[-0.4px] hover:bg-white/[0.04] transition-colors"
-                        >
-                            <Eye className="w-4.5 h-4.5 stroke-[2.5px]" /> VIEW RECEIPT
-                        </button>
+                {hasEvidence && (() => {
+                    const getFilenameFromUrl = (url: string | null | undefined) => {
+                        if (!url) return "payment_receipt.pdf";
+                        const parts = url.split("/");
+                        const lastPart = parts[parts.length - 1];
+                        try {
+                            const decoded = decodeURIComponent(lastPart);
+                            const match = decoded.match(/^\d+-(.+)$/);
+                            return match ? match[1] : decoded;
+                        } catch {
+                            return lastPart;
+                        }
+                    };
 
-                        <div className="border border-white/[0.05] bg-[#1B1B21] w-full h-[214.5px] rounded-[12px] flex flex-col items-center justify-center overflow-hidden p-4 relative group">
-                            <div className="text-center">
-                                <p className="text-[13px] font-extrabold text-[#DAFF00] uppercase tracking-wider mb-2">Evidence Received</p>
-                                <div className="w-[100px] h-[120px] bg-white rounded-[4px] mx-auto shadow-xl flex items-center justify-center border border-neutral-700">
-                                    <span className="text-neutral-400 text-xs font-mono select-none">DOC_PROOF</span>
+                    const renderPreviewFile = () => {
+                        if (!evidenceUrl) return <div className="text-white font-mono text-xs">NO FILE</div>;
+                        const isPdfFile = evidenceUrl.toLowerCase().endsWith(".pdf");
+
+                        if (isPdfFile) {
+                            return (
+                                <iframe 
+                                    src={`${evidenceUrl}#toolbar=0&navpanes=0&scrollbar=0`} 
+                                    className="w-full h-full border-0 pointer-events-none rounded-[8px]" 
+                                />
+                            );
+                        }
+
+                        return (
+                            <img 
+                                src={evidenceUrl} 
+                                alt="Uploaded receipt preview" 
+                                className="w-full h-full object-cover rounded-[8px]" 
+                            />
+                        );
+                    };
+
+                    return (
+                        <div className="w-full h-full flex flex-col gap-4">
+                            <button 
+                                type="button" 
+                                onClick={() => evidenceUrl && window.open(evidenceUrl, '_blank')}
+                                disabled={!evidenceUrl}
+                                className="bg-[#1F1F25] border border-white/[0.04] w-full h-[48px] text-[#DAFF00] font-bold text-[16px] leading-[24px] rounded-[12px] uppercase flex items-center justify-center gap-2 tracking-[-0.4px] hover:bg-white/[0.04] transition-colors disabled:opacity-50 cursor-pointer"
+                            >
+                                <Eye className="w-4.5 h-4.5 stroke-[2.5px]" /> VIEW RECEIPT
+                            </button>
+
+                            <div className="border border-white/[0.05] bg-[#1B1B21] w-full h-[214.5px] rounded-[12px] flex flex-col items-center justify-between p-6 select-none shadow-[inset_0_0_12px_rgba(218,255,0,0.05)] transition-all duration-300 relative">
+                                <div className="w-full flex items-center justify-between border-b border-[rgba(218,255,0,0.1)] pb-3">
+                                    <span className="text-[10px] text-[#64748B] font-bold tracking-[1px] uppercase font-space">
+                                        EVIDENCE RECEIVED
+                                    </span>
+                                    <span className="text-[9px] text-[#DAFF00] bg-[#DAFF00]/10 border border-[#DAFF00]/20 font-black p-[2px_8px] rounded-full uppercase tracking-wider font-space">
+                                        Verified
+                                    </span>
+                                </div>
+                                
+                                <div className="flex flex-row items-center gap-4 my-auto w-full px-2">
+                                    <div 
+                                        onClick={() => evidenceUrl && window.open(evidenceUrl, '_blank')}
+                                        className="w-[80px] h-[100px] relative rounded-[8px] bg-[#161618] overflow-hidden border border-white/[0.08] shadow-md flex items-center justify-center group cursor-pointer shrink-0"
+                                    >
+                                        {renderPreviewFile()}
+                                        <div className="absolute bottom-1 right-1 bg-black/70 rounded-full p-1 border border-white/20">
+                                            <Search className="w-3 h-3 text-white stroke-[2.5px]" />
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col gap-1 min-w-0 font-space">
+                                        <p className="text-[14px] font-black text-[#E4E1E9] truncate max-w-[160px]">
+                                            {getFilenameFromUrl(evidenceUrl)}
+                                        </p>
+                                        <p className="text-[10px] text-[#DAFF00] font-bold tracking-wider uppercase">
+                                            SECURED ON-CHAIN
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div className="w-full flex justify-between text-[10px] text-[#64748B] font-semibold border-t border-[rgba(218,255,0,0.05)] pt-3 font-space">
+                                    <span>TX REF: IK-9821-B</span>
+                                    <span>METHOD: SEPA BANK</span>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    );
+                })()}
             </div>
 
             {/* Action Buttons Footer Block */}

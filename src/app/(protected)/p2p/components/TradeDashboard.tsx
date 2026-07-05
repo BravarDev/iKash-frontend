@@ -112,7 +112,11 @@ export function TradeDashboard() {
                                     <div className="flex items-center gap-3">
                                         <div className="relative">
                                             <div className="w-12 h-12 rounded-full bg-[#343434] overflow-hidden flex items-center justify-center text-[#6b7280] text-xl">
-                                                👤
+                                                {userFound[offer.creatorId]?.profileImageUrl ? (
+                                                    <img src={userFound[offer.creatorId].profileImageUrl} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    "👤"
+                                                )}
                                             </div>
                                             <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-[#BCED09] border-2 border-[#161618] rounded-full"></div>
                                         </div>
