@@ -18,6 +18,7 @@ export interface TradeDetailsProps {
     counterpartyName?: string;
     counterpartyRate?: string;
     counterpartyKyc?: boolean;
+    counterpartyProfileImageUrl?: string;
 }
 
 export function TradeDetails({ 
@@ -34,7 +35,8 @@ export function TradeDetails({
     accountOwner = "QuantVortex_LP",
     counterpartyName = "QuantVortex_LP",
     counterpartyRate = "99.8%",
-    counterpartyKyc = true
+    counterpartyKyc = true,
+    counterpartyProfileImageUrl
 }: TradeDetailsProps) {
     const isBuyer = role === "buyer";
     const [isAccordionOpen, setIsAccordionOpen] = useState(false);
@@ -108,6 +110,13 @@ export function TradeDetails({
                                 Counterparty
                             </span>
                             <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-full bg-[#35343A] flex items-center justify-center overflow-hidden shrink-0">
+                                    {counterpartyProfileImageUrl ? (
+                                        <img src={counterpartyProfileImageUrl} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <User className="w-3 h-3 text-white" />
+                                    )}
+                                </div>
                                 <span className="text-white font-bold text-[16px] font-space">
                                     {counterpartyName}
                                 </span>
@@ -207,8 +216,12 @@ export function TradeDetails({
                         COUNTERPARTY
                     </p>
                     <div className="flex items-center gap-3 h-[40px]">
-                        <div className="w-8 h-8 rounded-[12px] bg-[#35343A] flex items-center justify-center border border-white/[0.04] shrink-0">
-                            <User className="w-4 h-4 text-white" />
+                        <div className="w-8 h-8 rounded-[12px] bg-[#35343A] flex items-center justify-center border border-white/[0.04] shrink-0 overflow-hidden">
+                            {counterpartyProfileImageUrl ? (
+                                <img src={counterpartyProfileImageUrl} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                                <User className="w-4 h-4 text-white" />
+                            )}
                         </div>
                         <div className="flex flex-col min-w-0">
                             <div className="flex items-center gap-1.5">

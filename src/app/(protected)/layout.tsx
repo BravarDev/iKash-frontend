@@ -1,20 +1,13 @@
 "use client";
 
 import { useWallet } from "@/features/wallet";
-import { useUser } from "@/features/user/presentation/context/UserContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const { isConnected, isLoading } = useWallet();
-  const { currentUser } = useUser();
   const router = useRouter();
-  const mockProfileUploadEnabled = process.env.NEXT_PUBLIC_ENABLE_MOCK_PROFILE_UPLOAD === "true";
-  const canBypassInDev =
-    process.env.NODE_ENV !== "production" &&
-    mockProfileUploadEnabled &&
-    Boolean(currentUser?.userId);
-  const canAccess = isConnected || canBypassInDev;
+  const canAccess = isConnected;
 
   useEffect(() => {
     if (!isLoading && !canAccess) {

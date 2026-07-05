@@ -289,6 +289,7 @@ export default function TradePage({ params }: PageProps) {
                                                 counterpartyName={counterpartyUser?.alias || "Seller"}
                                                 counterpartyRate="99.8%"
                                                 counterpartyKyc={counterpartyUser?.kycStatus === "approved"}
+                                                counterpartyProfileImageUrl={counterpartyUser?.profileImageUrl}
                                             />
                                         </div>
                                         <div className="w-full md:w-[402.8px] h-full shrink-0">
@@ -386,6 +387,7 @@ export default function TradePage({ params }: PageProps) {
                         <Chat 
                             orderId={order.orderId} 
                             chatName={counterpartyUser?.alias || (isBuyer ? "Seller" : "Buyer")} 
+                            counterpartyProfileImageUrl={counterpartyUser?.profileImageUrl}
                         />
                     </div>
                 </main>

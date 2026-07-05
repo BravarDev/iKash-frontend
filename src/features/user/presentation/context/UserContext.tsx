@@ -4,22 +4,6 @@ import { createContext, useContext, useState, ReactNode, useEffect, useCallback 
 import { Users } from '../../models/users';
 import { walletService } from '../../../wallet/application/wallet.service';
 
-const mockProfileUploadEnabled = process.env.NEXT_PUBLIC_ENABLE_MOCK_PROFILE_UPLOAD === "true";
-
-const MOCK_USER: Users = {
-    userId: "mock-user-1",
-    publicKey: "GMOCKPUBLICKEY1234567890",
-    alias: "Chijioke",
-    email: "chijioke@example.com",
-    notificationsEnabled: true,
-    pendingAccountInfo: false,
-    kycStatus: "approved",
-    totalVolume: "0",
-    createdAt: new Date("2026-06-18T00:00:00.000Z").toISOString(),
-    bio: "",
-    profileImageUrl: "",
-};
-
 function isTokenExpired(token: string | null) {
     if (!token) return true;
     try {
@@ -71,14 +55,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 try {
                     setCurrentUser(JSON.parse(storedUser));
                     return;
-    } catch (err) {
+                } catch (err) {
                     console.error('Error parsing stored user:', err);
                 }
-            }
-
-            if (mockProfileUploadEnabled) {
-                setCurrentUser(MOCK_USER);
-                localStorage.setItem('ikash_user', JSON.stringify(MOCK_USER));
             }
         }, 0);
 

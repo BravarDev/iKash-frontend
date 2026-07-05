@@ -10,8 +10,7 @@ export function useUsers() {
     const [users, setUsers] = useState<Users[]>([]);
     const [user, setUser] = useState<Users | null>(null);
     const [userFound, setUserFound] = useState<Record<string, Users>>({})
-    const { accessToken, currentUser, setAccessToken, setCurrentUser } = useUser();
-    const mockProfileUploadEnabled = process.env.NEXT_PUBLIC_ENABLE_MOCK_PROFILE_UPLOAD === "true";
+    const { accessToken, setAccessToken, setCurrentUser } = useUser();
 
     useEffect(() => {
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`)
@@ -78,9 +77,6 @@ export function useUsers() {
         try {
             const formData = new FormData();
             formData.append("profileImage", file);
-            if (mockProfileUploadEnabled && currentUser) {
-                formData.append("userSnapshot", JSON.stringify(currentUser));
-            }
 
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}/profile-picture`, {
                 method: "PATCH",

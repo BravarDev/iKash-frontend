@@ -19,12 +19,18 @@ export function HeaderUser() {
 
     return (
         <div className="flex items-center gap-3">
-            {/* Mock avatar: user initial with icon fallback */}
-            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#374151] text-white text-sm font-semibold shrink-0">
-                {initial || <User size={18} strokeWidth={2} />}
+            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#374151] text-white text-sm font-semibold shrink-0 overflow-hidden">
+                {currentUser.profileImageUrl ? (
+                    <img
+                        src={currentUser.profileImageUrl}
+                        alt={alias ?? "User avatar"}
+                        className="w-full h-full object-cover"
+                    />
+                ) : (
+                    initial || <User size={18} strokeWidth={2} />
+                )}
             </div>
 
-            {/* Identity text — hidden on very small screens */}
             <div className="hidden sm:flex flex-col min-w-0 max-w-[160px]">
                 <span className="text-white text-sm font-semibold truncate">
                     {username}
