@@ -567,10 +567,7 @@ function ConnectWalletModal({
       if (selectedProvider === "freighter") {
         const { getNetwork } = await import("@stellar/freighter-api");
         const activeNet = await getNetwork();
-        const activeNetStr =
-          typeof activeNet === "string"
-            ? activeNet
-            : (activeNet as Record<string, unknown>)?.network || "TESTNET";
+        const activeNetStr = activeNet.network || "TESTNET";
         if (activeNetStr.toUpperCase() !== "TESTNET") {
           throw new Error(
             "Active network is Mainnet. Please switch your wallet configuration to TESTNET.",

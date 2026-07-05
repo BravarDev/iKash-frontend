@@ -23,6 +23,8 @@ export interface Order {
     fiatAmount: string;
     orderStatus: string;
     expiresAt: string | null;
+    createdAt?: string;
+    assetCode?: string;
     offer?: Offer;
     escrow?: EscrowOnChain | null;
     buyer?: Users;

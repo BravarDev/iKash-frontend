@@ -6,6 +6,7 @@ import { Aside } from "@/app/components/Aside";
 import { Header } from "@/app/components/Header";
 import { OrderNavbar } from "../components/OrderNavbar";
 import { useUser } from "@/features/user/presentation/context/UserContext";
+import type { Order } from "@/features/order/models/order";
 import { useOrders } from "@/features/order/hooks/useOrders";
 import { ChevronRight, Calendar, ShoppingCart, TrendingUp } from "lucide-react";
 
