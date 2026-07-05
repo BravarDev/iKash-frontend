@@ -108,5 +108,20 @@ export function useEscrows() {
         return await handleResponse(res, "Error al liberar los fondos del escrow");
     }, [accessToken, handleResponse]);
 
-    return { openEscrow, fundEscrow, syncEscrow, markFiatSent, releaseEscrow };
+    const uploadEvidence = useCallback(async (escrowId: string, file: File) => {
+        const headers: Record<string, string> = {};
+        if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/escrows/${escrowId}/evidence`, {
+            method: "POST",
+            headers,
+            body: formData,
+        });
+        return await handleResponse(res, "Error al subir el comprobante de pago");
+    }, [accessToken, handleResponse]);
+
+    return { openEscrow, fundEscrow, syncEscrow, markFiatSent, releaseEscrow, uploadEvidence };
 }

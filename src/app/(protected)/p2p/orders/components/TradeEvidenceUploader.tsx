@@ -23,9 +23,9 @@ export function TradeEvidenceUploader({
     buyerAddress,
     onStatusChange
 }: TradeEvidenceUploaderProps) {
-    const { markFiatSent, syncEscrow } = useEscrows();
+    const { markFiatSent, syncEscrow, uploadEvidence } = useEscrows();
 
-    const [uploadedFile, setUploadedFile] = useState<{ name: string; size: string } | null>(null);
+    const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -35,8 +35,7 @@ export function TradeEvidenceUploader({
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const file = e.target.files[0];
-            const sizeInKb = (file.size / 1024).toFixed(1);
-            setUploadedFile({ name: file.name, size: `${sizeInKb} KB` });
+            setUploadedFile(file);
         }
     };
 
@@ -54,8 +53,7 @@ export function TradeEvidenceUploader({
         setIsDragging(false);
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
             const file = e.dataTransfer.files[0];
-            const sizeInKb = (file.size / 1024).toFixed(1);
-            setUploadedFile({ name: file.name, size: `${sizeInKb} KB` });
+            setUploadedFile(file);
         }
     };
 
@@ -68,9 +66,14 @@ export function TradeEvidenceUploader({
         setIsSubmitting(true);
         try {
             if (escrowStatus === "funded") {
+                let evidenceUrl = "Payment evidence";
+                if (uploadedFile) {
+                    const uploadRes = await uploadEvidence(escrowId, uploadedFile);
+                    evidenceUrl = uploadRes.url;
+                }
                 const res = await markFiatSent(escrowId, {
                     buyerAddress,
-                    evidence: uploadedFile ? `File: ${uploadedFile.name}` : "Payment evidence"
+                    evidence: evidenceUrl
                 });
                 const actionXdr = res.unsignedFundTransaction || res.unsignedTransaction;
                 if (!actionXdr) throw new Error("Confirmation failed: no unsigned XDR returned");
@@ -213,7 +216,7 @@ export function TradeEvidenceUploader({
                         {uploadedFile ? (
                             <div className="text-center p-4">
                                 <p className="text-[14px] font-bold text-[#DAFF00] truncate max-w-[240px]">{uploadedFile.name}</p>
-                                <p className="text-[11px] text-[rgba(143,131,137,0.8)] mt-1 font-semibold">{uploadedFile.size}</p>
+                                <p className="text-[11px] text-[rgba(143,131,137,0.8)] mt-1 font-semibold">{(uploadedFile.size / 1024).toFixed(1)} KB</p>
                             </div>
                         ) : (
                             <div className="flex flex-col items-center gap-2">
