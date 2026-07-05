@@ -346,7 +346,11 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
                     <div className="bg-[#1F1F25] border-l-4 border-[#CEF100] rounded-lg p-4 flex items-center justify-between h-[80px]">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-full bg-[#39383F] border border-[#454932]/30 flex items-center justify-center text-[#E4E1E9] font-bold text-lg shrink-0 overflow-hidden shadow-inner">
-                                👤
+                                {creator?.profileImageUrl ? (
+                                    <img src={creator.profileImageUrl} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                    "👤"
+                                )}
                             </div>
                             <div className="flex flex-col">
                                 <div className="flex items-center gap-1.5">
