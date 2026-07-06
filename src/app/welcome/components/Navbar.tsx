@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useRef, useState, useEffect } from "react";
 import Image from 'next/image'
 import { ConnectButton } from "@/features/wallet/presentation/components/ConnectButton";
+import { usePathname } from "next/navigation";
 
 const navLinks = [
 	{ label: "Home", href: "/" },
+	{ label: "Statistics", href: "/stats" },
 	{ label: "Info", href: "/info" },
 ];
 
@@ -16,9 +18,9 @@ const walletOptions = [
 ];
 
 export function Navbar({ onConnectClick }: { onConnectClick?: () => void }) {
-	const [active, setActive] = useState("Home");
 	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
+	const pathname = usePathname()
 
 	useEffect(() => {
 		function handleClickOutside(e: MouseEvent) {
@@ -43,20 +45,22 @@ export function Navbar({ onConnectClick }: { onConnectClick?: () => void }) {
 				</div>
 
 				<ul className="hidden md:flex items-center gap-8">
-					{navLinks.map((link) => (
-						<li key={link.label}>
-							<Link
-								href={link.href}
-								onClick={() => setActive(link.label)}
-								className={`text-sm transition-colors duration-150 ${active === link.label
-									? "text-[#BCED09] font-medium"
-									: "text-gray-400 hover:text-white font-medium"
-									}`}
-							>
-								{link.label}
-							</Link>
-						</li>
-					))}
+					{navLinks.map((link) => {
+						const isActive = pathname === link.href
+						return (
+							<li key={link.label}>
+								<Link
+									href={link.href}
+									className={`text-sm transition-colors duration-150 ${isActive
+										? "text-[#BCED09] font-medium"
+										: "text-gray-400 hover:text-white font-medium"
+										}`}
+								>
+									{link.label}
+								</Link>
+							</li>
+						);
+					})}
 				</ul>
 				<div className="hidden md:block relative" ref={dropdownRef}>
 					<button
