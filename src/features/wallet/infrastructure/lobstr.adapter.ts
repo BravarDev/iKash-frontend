@@ -22,15 +22,15 @@ export const lobstrAdapter = {
 
     // Firma una transacción XDR con LOBSTR
     async signTransaction(xdr: string): Promise<string> {
-        type SignResult = string | { signedTxXdr?: string; signedTransaction?: string; signedXDR?: string; error?: string | { message: string } };
-        const res: SignResult = await lobstrSignTransaction(xdr);
-        if (typeof res !== "string" && res?.error) {
-            // Preserve structured error (if object) so isSignatureCancelled can inspect fields;
-            // fall back to string wrapping for plain string errors.
-            throw typeof res.error === "string" ? new Error(res.error) : res.error;
+        type SignResultObject = { signedTxXdr?: string; signedTransaction?: string; signedXDR?: string; error?: string | { message: string } };
+        const res: unknown = await lobstrSignTransaction(xdr);
+        if (typeof res !== "string" && res !== null && res !== undefined) {
+            const obj = res as SignResultObject;
+            if (obj.error) {
+                throw typeof obj.error === "string" ? new Error(obj.error) : obj.error;
+            }
+            return obj.signedTxXdr || obj.signedTransaction || obj.signedXDR || (res as unknown as string);
         }
-        return typeof res === "string"
-            ? res
-            : res.signedTxXdr || res.signedTransaction || res.signedXDR || (res as unknown as string);
+        return typeof res === "string" ? res : "";
     },
 };

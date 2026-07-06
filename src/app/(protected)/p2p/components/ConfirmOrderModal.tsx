@@ -96,7 +96,7 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
 
         userMethods.forEach(um => {
             const umProviderId = um.provider_id || um.bankName;
-            const umLabel = um.payment_provider?.name || um.bankName || um.type;
+            const umLabel = um.payment_provider?.name || um.bankName || um.type || "";
             const umDesc = um.account_identifier || um.accountDetails || "";
 
             const matchFound = creatorMethods.some(cm => {
@@ -104,9 +104,10 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
                 return cmProviderId === umProviderId;
             });
 
-            if (matchFound) {
+            const paymentId = um.payment_id || um.paymentId;
+            if (matchFound && paymentId) {
                 matches.push({
-                    id: um.payment_id || um.paymentId,
+                    id: paymentId,
                     label: umLabel,
                     desc: umDesc
                 });
@@ -215,10 +216,16 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
                     return;
                 }
 
+                if (!escrowId) {
+                    notify("error", "Escrow ID missing. Cannot fund escrow.");
+                    router.push("/p2p/orders/" + orderData.orderId.replace(/-/g, ""));
+                    return;
+                }
+
                 // Sign using connected wallet
                 try {
                     const signedXdr = await sig.sign(unsignedXdr);
-                    await syncEscrow({ escrowId: escrowId, action: "fund", signedXdr });
+                    await syncEscrow({ escrowId, action: "fund", signedXdr });
                     notify("success", "Escrow funded successfully. Redirecting to trade view.");
                     router.push("/p2p/orders/" + orderData.orderId.replace(/-/g, ""));
                     return;
@@ -339,7 +346,11 @@ export function ConfirmOrderModal({ offer, creator, onClose }: ConfirmOrderModal
                     <div className="bg-[#1F1F25] border-l-4 border-[#CEF100] rounded-lg p-4 flex items-center justify-between h-[80px]">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-full bg-[#39383F] border border-[#454932]/30 flex items-center justify-center text-[#E4E1E9] font-bold text-lg shrink-0 overflow-hidden shadow-inner">
-                                👤
+                                {creator?.profileImageUrl ? (
+                                    <img src={creator.profileImageUrl} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                    "👤"
+                                )}
                             </div>
                             <div className="flex flex-col">
                                 <div className="flex items-center gap-1.5">

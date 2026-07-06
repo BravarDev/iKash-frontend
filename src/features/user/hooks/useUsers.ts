@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Users } from "../models/users";
 import { CreateUser } from "../models/createUser";
 import { SetupAccountPayload } from "../models/setupAccount";
@@ -10,8 +10,7 @@ export function useUsers() {
     const [users, setUsers] = useState<Users[]>([]);
     const [user, setUser] = useState<Users | null>(null);
     const [userFound, setUserFound] = useState<Record<string, Users>>({})
-    const { accessToken, currentUser, setAccessToken, setCurrentUser } = useUser();
-    const mockProfileUploadEnabled = process.env.NEXT_PUBLIC_ENABLE_MOCK_PROFILE_UPLOAD === "true";
+    const { accessToken, setAccessToken, setCurrentUser } = useUser();
 
     useEffect(() => {
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`)
@@ -25,7 +24,7 @@ export function useUsers() {
             .catch(err => console.error(err));
     }, []);
 
-    const getUser = async (userId: string) => {
+    const getUser = useCallback(async (userId: string) => {
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`)
             if (!res.ok) throw new Error('User not found');
@@ -34,7 +33,7 @@ export function useUsers() {
         } catch (error) {
             console.error(error)
         }
-    }
+    }, [])
 
     const createUser = async (user: CreateUser) => {
         try {
@@ -78,9 +77,6 @@ export function useUsers() {
         try {
             const formData = new FormData();
             formData.append("profileImage", file);
-            if (mockProfileUploadEnabled && currentUser) {
-                formData.append("userSnapshot", JSON.stringify(currentUser));
-            }
 
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}/profile-picture`, {
                 method: "PATCH",

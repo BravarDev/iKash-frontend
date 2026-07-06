@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CreateOfferModal } from "./CreateOfferModal";
 import { ConfirmOrderModal } from "./ConfirmOrderModal";
 import { useOffers } from "@/features/offer/hooks/useOffers";
@@ -33,9 +33,9 @@ export function TradeDashboard() {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
 
-    // If user wants to "Buy", they need to see offers where the merchant is "selling".
-    // If user wants to "Sell", they need to see offers where the merchant is "buying".
-    const { offers } = useOffers({ type: tab === "Buy" ? "sell" : "buy" });
+    const filters = useMemo(() => ({ type: tab === "Buy" ? "sell" : "buy" }), [tab]);
+
+    const { offers } = useOffers(filters);
     // Filter out offers that have been executed/archived server-side
     const visibleOffers = offers.filter(o => !o.executed);
 
@@ -112,7 +112,11 @@ export function TradeDashboard() {
                                     <div className="flex items-center gap-3">
                                         <div className="relative">
                                             <div className="w-12 h-12 rounded-full bg-[#343434] overflow-hidden flex items-center justify-center text-[#6b7280] text-xl">
-                                                👤
+                                                {userFound[offer.creatorId]?.profileImageUrl ? (
+                                                    <img src={userFound[offer.creatorId].profileImageUrl} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    "👤"
+                                                )}
                                             </div>
                                             <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-[#BCED09] border-2 border-[#161618] rounded-full"></div>
                                         </div>

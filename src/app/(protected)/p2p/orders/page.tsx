@@ -6,6 +6,7 @@ import { Aside } from "@/app/components/Aside";
 import { Header } from "@/app/components/Header";
 import { OrderNavbar } from "../components/OrderNavbar";
 import { useUser } from "@/features/user/presentation/context/UserContext";
+import type { Order } from "@/features/order/models/order";
 import { useOrders } from "@/features/order/hooks/useOrders";
 import { ChevronRight, Calendar, ShoppingCart, TrendingUp } from "lucide-react";
 
@@ -19,6 +20,7 @@ const MOCK_ORDERS = [
     counterparty: {
       alias: "CryptoKing_99",
       kycStatus: "approved",
+      profileImageUrl: undefined,
     },
     dateStr: "OCT 24, 2026",
     valueUsd: "3,250.00",
@@ -33,6 +35,7 @@ const MOCK_ORDERS = [
     counterparty: {
       alias: "StellarWhale",
       kycStatus: "approved",
+      profileImageUrl: undefined,
     },
     dateStr: "OCT 21, 2026",
     valueUsd: "210.45",
@@ -47,6 +50,7 @@ const MOCK_ORDERS = [
     counterparty: {
       alias: "OxDeFi_Master",
       kycStatus: "approved",
+      profileImageUrl: undefined,
     },
     dateStr: "OCT 19, 2026",
     valueUsd: "2,140.12",
@@ -61,6 +65,7 @@ const MOCK_ORDERS = [
     counterparty: {
       alias: "Nova_Trader",
       kycStatus: "approved",
+      profileImageUrl: undefined,
     },
     dateStr: "OCT 15, 2026",
     valueUsd: "5,000.00",
@@ -103,6 +108,7 @@ export default function OrdersPage() {
         counterparty: {
           alias: isBuy ? (o.seller?.alias || "Merchant") : (o.buyer?.alias || "Buyer"),
           kycStatus: isBuy ? o.seller?.kycStatus : o.buyer?.kycStatus,
+          profileImageUrl: isBuy ? o.seller?.profileImageUrl : o.buyer?.profileImageUrl,
         },
         dateStr: formattedDate,
         valueUsd: totalFiat.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
@@ -286,7 +292,11 @@ export default function OrdersPage() {
                     {/* COUNTERPARTY */}
                     <div className="flex items-center gap-2">
                       <div className="w-5 h-5 rounded-full bg-[#35343A] overflow-hidden flex items-center justify-center text-[10px] font-black text-[#CBD5E1]">
-                        {o.counterparty.alias[0]?.toUpperCase()}
+                        {o.counterparty.profileImageUrl ? (
+                          <img src={o.counterparty.profileImageUrl} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          o.counterparty.alias[0]?.toUpperCase()
+                        )}
                       </div>
                       <span className="text-xs font-semibold text-[#CBD5E1]">
                         {o.counterparty.alias}

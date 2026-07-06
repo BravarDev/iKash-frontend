@@ -11,6 +11,7 @@ export interface EscrowOnChain {
     sellerAddress?: string | null;
     txHashLock?: string | null;
     txHashRelease?: string | null;
+    evidenceUrl?: string | null;
 }
 
 export interface Order {
@@ -23,6 +24,8 @@ export interface Order {
     fiatAmount: string;
     orderStatus: string;
     expiresAt: string | null;
+    createdAt?: string;
+    assetCode?: string;
     offer?: Offer;
     escrow?: EscrowOnChain | null;
     buyer?: Users;
