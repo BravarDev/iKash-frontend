@@ -8,15 +8,41 @@ import {
     Tooltip,
 } from "recharts";
 
+type TimeWindow = "7d" | "2s" | "1m" | "all";
+
 type WaitlistGrowthProps = {
     timeLine: WaitListTimeLine[];
+    activeWindow: TimeWindow;
+    onWindowChange: (w: TimeWindow) => void;
 }
 
-export function WaitlistGrowth({ timeLine }: WaitlistGrowthProps) {
+const windows: { key: TimeWindow; label: string }[] = [
+    { key: "7d", label: "7D" },
+    { key: "2s", label: "2S" },
+    { key: "1m", label: "1M" },
+    { key: "all", label: "ALL" },
+];
+
+export function WaitlistGrowth({ timeLine, activeWindow, onWindowChange }: WaitlistGrowthProps) {
     return (
-        <div>
-            <ResponsiveContainer width="95%" height={300}>
-                <AreaChart data={timeLine} margin={{ top: 50, right: 30, left: 30, bottom: 0 }}>
+        <div className="relative w-full h-full min-h-[300px]">
+            <div className="absolute -top-10 right-0 flex gap-1.5 z-10">
+                {windows.map((w) => (
+                    <button
+                        key={w.key}
+                        onClick={() => onWindowChange(w.key)}
+                        className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors ${
+                            activeWindow === w.key
+                                ? "bg-[#BCED09] text-[#010308]"
+                                : "bg-[#2A2A2A] text-[#9ca3af] hover:bg-[#3A3A3A] hover:text-white"
+                        }`}
+                    >
+                        {w.label}
+                    </button>
+                ))}
+            </div>
+            <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={timeLine} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
                     <defs>
                         <linearGradient id="lineGlow" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stopColor="#a3e635" stopOpacity={0.35} />
@@ -36,7 +62,8 @@ export function WaitlistGrowth({ timeLine }: WaitlistGrowthProps) {
                         axisLine={false}
                         tickLine={false}
                         tick={{ fill: "#6b7280", fontSize: 10 }}
-                        interval={0}
+                        interval="preserveStartEnd"
+                        minTickGap={20}
                     />
 
                     <Tooltip
