@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
 import { OfferFilters as OfferFiltersType, DEFAULT_FILTERS } from "../types/offer-filter.types";
 import { FilterValidationErrors } from "../types/offer-filter.types";
 import { OfferSortSelect } from "./OfferSortSelect";
@@ -70,6 +70,7 @@ function FilterSelect({
     );
 }
 
+// Controlled variant — used by the mobile drawer where values are committed on Apply.
 function AmountInput({
     id,
     label,
@@ -115,6 +116,58 @@ function AmountInput({
     );
 }
 
+// Uncontrolled variant — used by the desktop bar so the input is not controlled
+// by React state, eliminating the need for setState-in-effect sync.
+// A `resetKey` that changes when the external value is cleared forces a remount,
+// resetting the input to its `defaultValue` without any useEffect.
+function UncontrolledAmountInput({
+    id,
+    label,
+    defaultValue,
+    resetKey,
+    placeholder,
+    error,
+    onChange,
+}: {
+    id: string;
+    label: string;
+    defaultValue: string;
+    resetKey: string;
+    placeholder: string;
+    error?: string;
+    onChange: (v: string) => void;
+}) {
+    return (
+        <div className="flex flex-col gap-1.5">
+            <label htmlFor={id} className="text-[#8F8389] text-[10px] font-bold tracking-widest uppercase">
+                {label}
+            </label>
+            <input
+                key={resetKey}
+                id={id}
+                type="number"
+                defaultValue={defaultValue}
+                placeholder={placeholder}
+                min={0}
+                step="0.01"
+                onKeyDown={(e) => ["-", "e", "E"].includes(e.key) && e.preventDefault()}
+                onChange={(e) => { const v = e.target.value; onChange(v); }}
+                className={`bg-[#1a1a1c] border rounded-xl px-4 py-2.5 text-white text-sm font-medium
+                            placeholder:text-[#4a4a4a] focus:outline-none transition-colors duration-200
+                            [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none
+                            [&::-webkit-inner-spin-button]:appearance-none
+                            ${error
+                                ? "border-red-500/60 focus:ring-2 focus:ring-red-500/30"
+                                : "border-[#2D2D2D] hover:border-[#BCED09]/30 focus:ring-2 focus:ring-[#BCED09]/40 focus:border-[#BCED09]/60"
+                            }`}
+            />
+            {error && (
+                <span className="text-red-400 text-[10px] font-medium leading-tight">{error}</span>
+            )}
+        </div>
+    );
+}
+
 // ----------------------------------------------------------
 // Desktop filter bar
 // ----------------------------------------------------------
@@ -125,24 +178,22 @@ function DesktopFilterBar({
     availableAssets,
     onFilterChange,
 }: Pick<OfferFiltersProps, "filters" | "errors" | "availablePaymentMethods" | "availableAssets" | "onFilterChange">) {
-    // Debounce amount inputs by 600ms before propagating
+    // Debounce refs — no local state required.
     const minDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
     const maxDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const [localMin, setLocalMin] = useState(filters.minAmount);
-    const [localMax, setLocalMax] = useState(filters.maxAmount);
 
-    // Keep local state in sync if filters change externally (e.g., URL clear)
-    useEffect(() => { setLocalMin(filters.minAmount); }, [filters.minAmount]);
-    useEffect(() => { setLocalMax(filters.maxAmount); }, [filters.maxAmount]);
+    // These keys change when the filter is externally cleared (e.g. "Clear filters").
+    // Changing a key forces React to remount the input, resetting it to defaultValue
+    // without needing useState or useEffect.
+    const minResetKey = `min-${filters.minAmount === "" ? "empty" : "set"}`;
+    const maxResetKey = `max-${filters.maxAmount === "" ? "empty" : "set"}`;
 
     const handleMinChange = useCallback((v: string) => {
-        setLocalMin(v);
         if (minDebounce.current) clearTimeout(minDebounce.current);
         minDebounce.current = setTimeout(() => onFilterChange("minAmount", v), 600);
     }, [onFilterChange]);
 
     const handleMaxChange = useCallback((v: string) => {
-        setLocalMax(v);
         if (maxDebounce.current) clearTimeout(maxDebounce.current);
         maxDebounce.current = setTimeout(() => onFilterChange("maxAmount", v), 600);
     }, [onFilterChange]);
@@ -165,18 +216,20 @@ function DesktopFilterBar({
                 placeholder="All Assets"
                 onChange={(v) => onFilterChange("asset", v)}
             />
-            <AmountInput
+            <UncontrolledAmountInput
                 id="desktop-min-amount"
                 label="Min Amount"
-                value={localMin}
+                defaultValue={filters.minAmount}
+                resetKey={minResetKey}
                 placeholder="0.00"
                 error={errors.minAmount}
                 onChange={handleMinChange}
             />
-            <AmountInput
+            <UncontrolledAmountInput
                 id="desktop-max-amount"
                 label="Max Amount"
-                value={localMax}
+                defaultValue={filters.maxAmount}
+                resetKey={maxResetKey}
                 placeholder="No limit"
                 error={errors.maxAmount}
                 onChange={handleMaxChange}

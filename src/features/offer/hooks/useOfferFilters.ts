@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
     OfferFilters,
@@ -29,55 +29,45 @@ export function useOfferFilters(): UseOfferFiltersReturn {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    // Initialise from URL on mount
-    const initialFilters = parseFiltersFromURL(searchParams);
-    const [filters, setFilters] = useState<OfferFilters>(initialFilters);
+    // Derive filters directly from the URL — no useState, no useEffect needed.
+    // When the URL changes (router.replace or browser back/forward), searchParams
+    // updates and this memo recomputes automatically, avoiding setState-in-effect.
+    const filters = useMemo(() => parseFiltersFromURL(searchParams), [searchParams]);
 
-    // Draft state for the mobile drawer (apply on confirm)
-    const [draftFilters, setDraftFilters] = useState<OfferFilters>(initialFilters);
+    // Draft state for the mobile drawer (committed only when "Apply" is tapped).
+    // Initialized from the current URL on mount; reset explicitly by user actions.
+    const [draftFilters, setDraftFilters] = useState<OfferFilters>(() =>
+        parseFiltersFromURL(searchParams)
+    );
 
-    // Validation errors
+    // Validation errors (shared between desktop and mobile drawer)
     const [errors, setErrors] = useState<FilterValidationErrors>({});
 
-    // Sync URL → state when the user navigates back/forward
-    const prevSearchRef = useRef(searchParams.toString());
-    useEffect(() => {
-        const current = searchParams.toString();
-        if (current !== prevSearchRef.current) {
-            prevSearchRef.current = current;
-            const parsed = parseFiltersFromURL(searchParams);
-            setFilters(parsed);
-            setDraftFilters(parsed);
-        }
-    }, [searchParams]);
-
-    // Push filters to URL
+    // Push a full filter object into the URL
     const pushToURL = useCallback(
         (next: OfferFilters) => {
             const qs = filtersToURLParams(next);
-            const newPath = qs ? `?${qs}` : "?";
-            router.replace(newPath, { scroll: false });
+            router.replace(qs ? `?${qs}` : "?", { scroll: false });
         },
         [router]
     );
 
-    // Set a single filter key and immediately push to URL
+    // Set a single filter key on desktop — validates then pushes to URL.
+    // Because `filters` is derived from the URL via useMemo, updating the URL
+    // automatically updates `filters` on the next render with no extra setState.
     const setFilter = useCallback(
         <K extends keyof OfferFilters>(key: K, value: OfferFilters[K]) => {
-            setFilters((prev) => {
-                const next = { ...prev, [key]: value };
-                const errs = validateFilters(next);
-                setErrors(errs);
-                if (Object.keys(errs).length === 0) {
-                    pushToURL(next);
-                }
-                return next;
-            });
+            const next = { ...filters, [key]: value };
+            const errs = validateFilters(next);
+            setErrors(errs);
+            if (Object.keys(errs).length === 0) {
+                pushToURL(next);
+            }
         },
-        [pushToURL]
+        [filters, pushToURL]
     );
 
-    // Set a single draft key (mobile drawer — doesn't push to URL yet)
+    // Update a single draft key in the mobile drawer (doesn't touch the URL)
     const setDraftFilter = useCallback(
         <K extends keyof OfferFilters>(key: K, value: OfferFilters[K]) => {
             setDraftFilters((prev) => {
@@ -90,19 +80,17 @@ export function useOfferFilters(): UseOfferFiltersReturn {
         []
     );
 
-    // Commit draft → live and push to URL
+    // Commit the mobile drawer draft → URL
     const applyDraftFilters = useCallback(() => {
         const errs = validateFilters(draftFilters);
         setErrors(errs);
         if (Object.keys(errs).length === 0) {
-            setFilters(draftFilters);
             pushToURL(draftFilters);
         }
     }, [draftFilters, pushToURL]);
 
-    // Reset everything
+    // Reset everything — clears draft, errors, and removes all URL params
     const clearFilters = useCallback(() => {
-        setFilters(DEFAULT_FILTERS);
         setDraftFilters(DEFAULT_FILTERS);
         setErrors({});
         router.replace("?", { scroll: false });
