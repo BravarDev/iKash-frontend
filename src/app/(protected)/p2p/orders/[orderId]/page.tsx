@@ -13,7 +13,7 @@ import { useOrders, ApiError } from "@/features/order/hooks/useOrders";
 import { canCancelOrder } from "@/features/order/utils/canCancelOrder";
 import { CancelOrderModal } from "../components/CancelOrderModal";
 import { useNotification } from "@/app/components/NotificationContext";
-import { ArrowLeft, AlertTriangle, Ban, Loader2, XCircle } from "lucide-react";
+import { ArrowLeft, AlertTriangle, Ban, Loader2 } from "lucide-react";
 import Link from "next/link";
 
 interface PageProps {
@@ -302,16 +302,6 @@ export default function TradePage({ params }: PageProps) {
                                 )}
                             </div>
                             <div className="flex items-center gap-4">
-                                {canCancel && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowCancelModal(true)}
-                                        className="flex items-center gap-1.5 text-[#FF6B6B] hover:text-[#ff8080] text-[12px] font-bold uppercase tracking-[1px] transition-colors cursor-pointer font-space border border-[#FF6B6B]/30 hover:border-[#FF6B6B]/60 rounded-md px-3 py-1.5"
-                                    >
-                                        <XCircle className="w-3.5 h-3.5" />
-                                        Cancel Order
-                                    </button>
-                                )}
                                 <h2 className="text-white font-black text-[20px] leading-7 uppercase tracking-normal font-space hidden md:block">
                                     ORDER DETAILS
                                 </h2>
@@ -350,6 +340,9 @@ export default function TradePage({ params }: PageProps) {
                                                 amount={amountVal}
                                                 evidenceUrl={order.escrow?.evidenceUrl}
                                                 onStatusChange={fetchOrder}
+                                                canCancel={canCancel}
+                                                isCancelling={isCancelling}
+                                                onCancelOrder={() => setShowCancelModal(true)}
                                             />
                                         </div>
                                     </div>
@@ -405,6 +398,9 @@ export default function TradePage({ params }: PageProps) {
                                             expiresAt={order.expiresAt as string | undefined}
                                             evidenceUrl={order.escrow?.evidenceUrl}
                                             onStatusChange={fetchOrder}
+                                            canCancel={canCancel}
+                                            isCancelling={isCancelling}
+                                            onCancelOrder={() => setShowCancelModal(true)}
                                         />
                                     </div>
 
