@@ -71,7 +71,7 @@ export function ActiveOrderCard({ order }: ActiveOrderCardProps) {
                 </div>
 
                 {/* Amount + Asset row */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center jusitfy-between">
                     <span className="text-[32px] font-bold text-white tracking-tight leading-none">
                         {order.assetAmount}
                     </span>
