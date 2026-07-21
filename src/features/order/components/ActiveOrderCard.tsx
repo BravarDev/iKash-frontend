@@ -57,7 +57,7 @@ export function ActiveOrderCard({ order }: ActiveOrderCardProps) {
             data-testid="active-order-card"
         >
             {/* Top section */}
-            <div className="flex flex-col gap-4 p-5">
+            <div className="flex flex-col gap-6 p-6">
                 {/* Role + Status row */}
                 <div className="flex items-center justify-between">
                     <span className="text-[11px] font-semibold tracking-[0.15em] text-[#8F8389] uppercase">
