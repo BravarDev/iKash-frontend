@@ -9,6 +9,7 @@ export interface ActiveOrderMock {
     assetCode: string;
     paymentMethod: string;
     counterpartyName: string;
+    counterpartyProfileImageUrl?: string;
     unitPrice: string;
     fiatCurrency: string;
     updatedAt: Date;
