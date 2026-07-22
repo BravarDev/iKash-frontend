@@ -90,9 +90,11 @@ export function ActiveOrderCard({ order }: ActiveOrderCardProps) {
                 <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-full bg-[#2a2a2a] border border-[#3a3a3a] shrink-0 overflow-hidden">
                         {order.counterpartyProfileImageUrl ? (
-                            <img
+                            <Image
                                 src={order.counterpartyProfileImageUrl}
-                                alt=""
+                                alt={order.counterpartyName || "Counterparty profile image"}
+                                width={36}
+                                height={36}
                                 className="w-full h-full object-cover"
                             />
                         ) : null}
